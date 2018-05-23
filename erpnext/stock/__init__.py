@@ -8,7 +8,7 @@ install_docs = [
 	{"doctype":"Role", "role_name":"Stock User", "name":"Stock User"},
 	{"doctype":"Role", "role_name":"Quality Manager", "name":"Quality Manager"},
 	{"doctype":"Item Group", "item_group_name":"All Item Groups", "is_group": 1},
-	{"doctype":"Item Group", "item_group_name":"Default", 
+	{"doctype":"Item Group", "item_group_name":"Default",
 		"parent_item_group":"All Item Groups", "is_group": 0},
 ]
 
@@ -34,11 +34,10 @@ def get_warehouse_account(warehouse, warehouse_account=None):
 	account = warehouse.account
 	if not account and warehouse.parent_warehouse:
 		if warehouse_account:
-			if warehouse_account.get(warehouse.parent_warehouse):
-				account = warehouse_account.get(warehouse.parent_warehouse).account
-			else:
-				from frappe.utils.nestedset import rebuild_tree
-				rebuild_tree("Warehouse", "parent_warehouse")
+		    try:
+                        account = warehouse_account.get(warehouse.parent_warehouse).account
+                    except:
+                        pass
 		else:
 			account = frappe.db.sql("""
 				select
@@ -57,6 +56,10 @@ def get_warehouse_account(warehouse, warehouse_account=None):
 		frappe.throw(_("Please set Account in Warehouse {0} or Default Inventory Account in Company {1}")
 			.format(warehouse.name, warehouse.company))
 	return account
-	
+
 def get_company_default_inventory_account(company):
+<<<<<<< HEAD
 	return frappe.get_cached_value('Company',  company,  'default_inventory_account')
+=======
+	return frappe.db.get_value('Company', company, 'default_inventory_account')
+>>>>>>> Fix error in Kitting Feeder
