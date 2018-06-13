@@ -332,6 +332,7 @@ def get_item_price_name(args):
 		AND price_list = %(price_list)s
 		AND min_qty = %(min_qty)s
 		AND uom=%(uom)s
+		AND is_active=1
 	"""
 	if args.get("customer"):
 		conditions += "and customer=%(customer)s"
