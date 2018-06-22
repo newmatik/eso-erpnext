@@ -407,25 +407,31 @@ erpnext.utils.update_child_items = function(opts) {
 	});
 
 	frm.doc[opts.child_docname].forEach(d => {
-		if (opts.child_doctype == 'Purchase Order Detail') {
-			if (d.qty > d.received_qty) {
-				dialog.fields_dict.trans_items.df.data.push({
-					"docname": d.name,
-					"item_code": d.item_code,
-					"qty": d.qty,
-					"rate": d.rate,
-				});
-			}
-		} else {
-			if (d.qty > d.delivered_qty) {
-				dialog.fields_dict.trans_items.df.data.push({
-					"docname": d.name,
-					"item_code": d.item_code,
-					"qty": d.qty,
-					"rate": d.rate,
-				});
-			}
-		}
+		dialog.fields_dict.trans_items.df.data.push({
+			"docname": d.name,
+			"item_code": d.item_code,
+			"qty": d.qty,
+			"rate": d.rate,
+		});
+		// if (opts.child_doctype == 'Purchase Order Detail') {
+		// 	if (d.qty > d.received_qty) {
+		// 		dialog.fields_dict.trans_items.df.data.push({
+		// 			"docname": d.name,
+		// 			"item_code": d.item_code,
+		// 			"qty": d.qty,
+		// 			"rate": d.rate,
+		// 		});
+		// 	}
+		// } else {
+		// 	if (d.qty > d.delivered_qty) {
+		// 		dialog.fields_dict.trans_items.df.data.push({
+		// 			"docname": d.name,
+		// 			"item_code": d.item_code,
+		// 			"qty": d.qty,
+		// 			"rate": d.rate,
+		// 		});
+		// 	}
+		// }
 		this.data = dialog.fields_dict.trans_items.df.data;
 		dialog.fields_dict.trans_items.grid.refresh();
 	})
