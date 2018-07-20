@@ -1059,12 +1059,7 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name):
 	for d in data:
 		child_item = frappe.get_doc(parent_doctype + ' Item', d.get("docname"))
 		child_item.qty = flt(d.get("qty"))
-
-		if child_item.billed_amt > (flt(d.get("rate")) * flt(d.get("qty"))):
-			frappe.throw(_("Row #{0}: Cannot set Rate if amount is greater than billed amount for Item {1}.")
-						 .format(child_item.idx, child_item.item_code))
-		else:
-			child_item.rate = flt(d.get("rate"))
+		child_item.rate = flt(d.get("rate"))
 		child_item.flags.ignore_validate_update_after_submit = True
 		child_item.save()
 
