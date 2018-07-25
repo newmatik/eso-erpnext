@@ -53,17 +53,19 @@ class EmailDigest(Document):
 		if recipients:
 			for user_id in recipients:
 				frappe.set_user(user_id)
-				msg_for_this_receipient = self.get_msg_html()
-				if msg_for_this_receipient:
+				frappe.set_user_lang(user_id)
+				msg_for_this_recipient = self.get_msg_html()
+				if msg_for_this_recipient:
 					frappe.sendmail(
 						recipients=user_id,
-						subject=_("{frequency} Digest").format(frequency=self.frequency),
-						message=msg_for_this_receipient,
+						subject=_("{0} Digest").format(self.frequency),
+						message=msg_for_this_recipient,
 						reference_doctype = self.doctype,
 						reference_name = self.name,
 						unsubscribe_message = _("Unsubscribe from this Email Digest"))
 
 		frappe.set_user(original_user)
+		frappe.set_user_lang(original_user)
 
 	def get_msg_html(self):
 		"""Build email digest content"""
@@ -417,8 +419,9 @@ class EmailDigest(Document):
 		value, count, billed_value, delivered_value = frappe.db.sql("""select ifnull(sum(grand_total),0), count(*),
 			ifnull(sum(grand_total*per_billed/100),0), ifnull(sum(grand_total*{0}/100),0)  from `tab{1}`
 			where (transaction_date <= %(to_date)s)
-			and status not in ('Closed','Cancelled', 'Completed') """.format(getfield, doc_type),
-			{"to_date": self.future_to_date})[0]
+			and status not in ('Closed','Cancelled', 'Completed')
+			and company = %(company)s """.format(getfield, doc_type),
+			{"to_date": self.future_to_date, "company": self.company})[0]
 
 		return {
 			"label": self.meta.get_label(fieldname),
@@ -432,11 +435,13 @@ class EmailDigest(Document):
 
 		value, count = frappe.db.sql("""select ifnull(sum(grand_total),0), count(*) from `tabQuotation`
 			where (transaction_date <= %(to_date)s)
-			and status not in ('Ordered','Cancelled', 'Lost') """,{"to_date": self.future_to_date})[0]
+			and company = %(company)s
+			and status not in ('Ordered','Cancelled', 'Lost') """,{"to_date": self.future_to_date, "company": self.company})[0]
 
 		last_value = frappe.db.sql("""select ifnull(sum(grand_total),0) from `tabQuotation`
 			where (transaction_date <= %(to_date)s)
-			and status not in ('Ordered','Cancelled', 'Lost') """,{"to_date": self.past_to_date})[0][0]
+			and company = %(company)s
+			and status not in ('Ordered','Cancelled', 'Lost') """,{"to_date": self.past_to_date, "company": self.company})[0][0]
 
 		return {
 			"label": self.meta.get_label(fieldname),
@@ -462,8 +467,9 @@ class EmailDigest(Document):
 	def get_total_on(self, doc_type, from_date, to_date):
 
 		return frappe.db.sql("""select ifnull(sum(grand_total),0), count(*) from `tab{0}`
-			where (transaction_date between %(from_date)s and %(to_date)s) and status not in ('Cancelled')""".format(doc_type),
-			{"from_date": from_date, "to_date": to_date})[0]
+			where (transaction_date between %(from_date)s and %(to_date)s) and company=%(company)s
+			and status not in ('Cancelled')""".format(doc_type),
+			{"from_date": from_date, "to_date": to_date, "company": self.company})[0]
 
 	def get_from_to_date(self):
 		today = now_datetime().date()

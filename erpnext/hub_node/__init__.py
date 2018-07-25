@@ -135,7 +135,7 @@ def get_details(hub_sync_id=None, doctype='Hub Item'):
 	connection = get_client_connection()
 	details = connection.get_doc(doctype, hub_sync_id)
 	reviews = details.get('reviews')
-	if len(reviews):
+	if reviews and len(reviews):
 		for r in reviews:
 			r.setdefault('pretty_date', frappe.utils.pretty_date(r.get('modified')))
 		details.setdefault('reviews', reviews)
@@ -187,7 +187,7 @@ def make_supplier(supplier):
 		supplier_doc = frappe.get_doc({
 			'doctype': 'Supplier',
 			'supplier_name': supplier.supplier_name,
-			'supplier_type': supplier.supplier_type,
+			'supplier_group': supplier.supplier_group,
 			'supplier_email': supplier.supplier_email
 		}).insert()
 	else:

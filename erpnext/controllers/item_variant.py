@@ -178,6 +178,14 @@ def create_variant(item, args):
 @frappe.whitelist()
 def enqueue_multiple_variant_creation(item, args):
 	# There can be innumerable attribute combinations, enqueue
+	if isinstance(args, basestring):
+		variants = json.loads(args)
+	total_variants = 1
+	for key in variants:
+		total_variants *= len(variants[key])
+	if total_variants >= 600:
+		frappe.msgprint("Please do not create more than 500 items at a time", raise_exception=1)
+		return
 	frappe.enqueue("erpnext.controllers.item_variant.create_multiple_variants",
 		item=item, args=args, now=frappe.flags.in_test);
 
@@ -273,17 +281,18 @@ def copy_attributes_to_variant(item, variant):
 					variant.set(field.fieldname, item.get(field.fieldname))
 
 	variant.variant_of = item.name
-	variant.has_variants = 0
-	if not variant.description:
-		variant.description = ""
+	if 'description' in allow_fields:
+		variant.has_variants = 0
+		if not variant.description:
+			variant.description = ""
 
-	if item.variant_based_on=='Item Attribute':
-		if variant.attributes:
-			attributes_description = ""
-			for d in variant.attributes:
-				attributes_description += "<div>" + d.attribute + ": " + cstr(d.attribute_value) + "</div>"
+		if item.variant_based_on=='Item Attribute':
+			if variant.attributes:
+				attributes_description = ""
+				for d in variant.attributes:
+					attributes_description += "<div>" + d.attribute + ": " + cstr(d.attribute_value) + "</div>"
 
-			if attributes_description not in variant.description:
+				if attributes_description not in variant.description:
 					variant.description += attributes_description
 
 def make_variant_item_code(template_item_code, template_item_name, variant):

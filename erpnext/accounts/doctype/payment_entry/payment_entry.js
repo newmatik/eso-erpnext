@@ -12,10 +12,8 @@ frappe.ui.form.on('Payment Entry', {
 
 	setup: function(frm) {
 		frm.set_query("paid_from", function() {
-			var party_account_type = in_list(["Customer", "Student"], frm.doc.party_type) ?
-				"Receivable" : "Payable";
 			var account_types = in_list(["Pay", "Internal Transfer"], frm.doc.payment_type) ?
-				["Bank", "Cash"] : party_account_type;
+				["Bank", "Cash"] : [frappe.boot.party_account_types[frm.doc.party_type]];
 
 			return {
 				filters: {
@@ -29,16 +27,14 @@ frappe.ui.form.on('Payment Entry', {
 		frm.set_query("party_type", function() {
 			return{
 				"filters": {
-					"name": ["in",["Customer","Supplier", "Employee", "Student"]],
+					"name": ["in", Object.keys(frappe.boot.party_account_types)],
 				}
 			}
 		});
 
 		frm.set_query("paid_to", function() {
-			var party_account_type = in_list(["Customer", "Student"], frm.doc.party_type) ?
-				"Receivable" : "Payable";
 			var account_types = in_list(["Receive", "Internal Transfer"], frm.doc.payment_type) ?
-				["Bank", "Cash"] : party_account_type;
+				["Bank", "Cash"] : [frappe.boot.party_account_types[frm.doc.party_type]];
 
 			return {
 				filters: {
@@ -86,9 +82,9 @@ frappe.ui.form.on('Payment Entry', {
 		});
 
 		frm.set_query("reference_name", "references", function(doc, cdt, cdn) {
-			child = locals[cdt][cdn];
-			filters = {"docstatus": 1, "company": doc.company};
-			party_type_doctypes = ['Sales Invoice', 'Sales Order', 'Purchase Invoice', 
+			const child = locals[cdt][cdn];
+			const filters = {"docstatus": 1, "company": doc.company};
+			const party_type_doctypes = ['Sales Invoice', 'Sales Order', 'Purchase Invoice',
 				'Purchase Order', 'Expense Claim', 'Fees'];
 
 			if (in_list(party_type_doctypes, child.reference_doctype)) {
@@ -197,7 +193,7 @@ frappe.ui.form.on('Payment Entry', {
 					"from_date": frm.doc.posting_date,
 					"to_date": frm.doc.posting_date,
 					"company": frm.doc.company,
-					group_by_voucher: 0
+					group_by: ""
 				};
 				frappe.set_route("query-report", "General Ledger");
 			}, "fa fa-table");
@@ -588,6 +584,10 @@ frappe.ui.form.on('Payment Entry', {
 	allocate_party_amount_against_ref_docs: function(frm, paid_amount) {
 		var total_positive_outstanding_including_order = 0;
 		var total_negative_outstanding = 0;
+		var total_deductions = frappe.utils.sum($.map(frm.doc.deductions || [],
+			function(d) { return flt(d.amount) }));
+
+		paid_amount -= total_deductions;
 
 		$.each(frm.doc.references || [], function(i, row) {
 			if(flt(row.outstanding_amount) > 0)
@@ -815,23 +815,30 @@ frappe.ui.form.on('Payment Entry Reference', {
 
 	reference_name: function(frm, cdt, cdn) {
 		var row = locals[cdt][cdn];
-		return frappe.call({
-			method: "erpnext.accounts.doctype.payment_entry.payment_entry.get_reference_details",
-			args: {
-				reference_doctype: row.reference_doctype,
-				reference_name: row.reference_name,
-				party_account_currency: frm.doc.payment_type=="Receive" ?
-					frm.doc.paid_from_account_currency : frm.doc.paid_to_account_currency
-			},
-			callback: function(r, rt) {
-				if(r.message) {
-					$.each(r.message, function(field, value) {
-						frappe.model.set_value(cdt, cdn, field, value);
-					})
-					frm.refresh_fields();
+		if (row.reference_name && row.reference_doctype) {
+			return frappe.call({
+				method: "erpnext.accounts.doctype.payment_entry.payment_entry.get_reference_details",
+				args: {
+					reference_doctype: row.reference_doctype,
+					reference_name: row.reference_name,
+					party_account_currency: frm.doc.payment_type=="Receive" ?
+						frm.doc.paid_from_account_currency : frm.doc.paid_to_account_currency
+				},
+				callback: function(r, rt) {
+					if(r.message) {
+						$.each(r.message, function(field, value) {
+							frappe.model.set_value(cdt, cdn, field, value);
+						})
+
+						let allocated_amount = frm.doc.unallocated_amount > row.outstanding_amount ?
+							row.outstanding_amount : frm.doc.unallocated_amount;
+
+						frappe.model.set_value(cdt, cdn, 'allocated_amount', allocated_amount);
+						frm.refresh_fields();
+					}
 				}
-			}
-		})
+			})
+		}
 	},
 
 	allocated_amount: function(frm) {

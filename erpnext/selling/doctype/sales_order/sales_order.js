@@ -18,7 +18,21 @@ frappe.ui.form.on("Sales Order", {
 		frm.set_indicator_formatter('item_code',
 			function(doc) { return (doc.stock_qty<=doc.delivered_qty) ? "green" : "orange" })
 	},
+	refresh: function(frm) {
+		if(frm.doc.docstatus == 1 && frm.doc.status == 'To Deliver and Bill') {
+			frm.add_custom_button(__('Update Items'), () => {
+				erpnext.utils.update_child_items({
+					frm: frm,
+					child_docname: "items",
+					child_doctype: "Sales Order Detail",
+				})
+			});
+		}
+	},
 	onload: function(frm) {
+		if (!frm.doc.transaction_date){
+			frm.set_value('transaction_date', frappe.datetime.get_today())
+		}
 		erpnext.queries.setup_queries(frm, "Warehouse", function() {
 			return erpnext.queries.warehouse(frm.doc);
 		});
@@ -28,6 +42,15 @@ frappe.ui.form.on("Sales Order", {
 				query: "erpnext.controllers.queries.get_project_name",
 				filters: {
 					'customer': doc.customer
+				}
+			}
+		});
+
+		frm.set_query("blanket_order", "items", function() {
+			return {
+				filters: {
+					"company": frm.doc.company,
+					"docstatus": 1
 				}
 			}
 		});
@@ -65,6 +88,10 @@ frappe.ui.form.on("Sales Order Item", {
 });
 
 erpnext.selling.SalesOrderController = erpnext.selling.SellingController.extend({
+	onload: function(doc, dt, dn) {
+		this._super();
+	},
+
 	refresh: function(doc, dt, dn) {
 		var me = this;
 		this._super();
@@ -154,7 +181,7 @@ erpnext.selling.SalesOrderController = erpnext.selling.SellingController.extend(
 							function() { me.make_project() }, __("Make"));
 				}
 
-				if(!doc.subscription) {
+				if(!doc.auto_repeat) {
 					this.frm.add_custom_button(__('Subscription'), function() {
 						erpnext.utils.make_subscription(doc.doctype, doc.name)
 					}, __("Make"))
@@ -438,11 +465,6 @@ erpnext.selling.SalesOrderController = erpnext.selling.SellingController.extend(
 				frappe.ui.form.is_saving = false;
 			}
 		});
-	},
-	on_submit: function(doc, cdt, cdn) {
-		if(cint(frappe.boot.notification_settings.sales_order)) {
-			this.frm.email_doc(frappe.boot.notification_settings.sales_order_message);
-		}
 	}
 });
 $.extend(cur_frm.cscript, new erpnext.selling.SalesOrderController({frm: cur_frm}));

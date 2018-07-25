@@ -77,8 +77,8 @@ class StockLedgerEntry(Document):
 				elif not frappe.db.get_value("Batch",{"item": self.item_code, "name": self.batch_no}):
 					frappe.throw(_("{0} is not a valid Batch Number for Item {1}").format(self.batch_no, self.item_code))
 
-			elif item_det.has_batch_no ==0 and self.batch_no:
-					frappe.throw(_("The Item {0} cannot have Batch").format(self.item_code))
+			elif item_det.has_batch_no ==0 and self.batch_no and self.is_cancelled == "No":
+				frappe.throw(_("The Item {0} cannot have Batch").format(self.item_code))
 
 		if item_det.has_variants:
 			frappe.throw(_("Stock cannot exist for Item {0} since has variants").format(self.item_code),
@@ -87,18 +87,14 @@ class StockLedgerEntry(Document):
 		self.stock_uom = item_det.stock_uom
 
 	def check_stock_frozen_date(self):
-		stock_frozen_upto = frappe.db.get_value('Stock Settings', None, 'stock_frozen_upto') or ''
+ 		return
+        # Hard coded
+		stock_frozen_upto = frappe.utils.get_datetime('2000-01-01').date()
 		if stock_frozen_upto:
 			stock_auth_role = frappe.db.get_value('Stock Settings', None,'stock_auth_role')
 			if getdate(self.posting_date) <= getdate(stock_frozen_upto) and not stock_auth_role in frappe.get_roles():
 				frappe.throw(_("Stock transactions before {0} are frozen").format(formatdate(stock_frozen_upto)), StockFreezeError)
 
-		stock_frozen_upto_days = int(frappe.db.get_value('Stock Settings', None, 'stock_frozen_upto_days') or 0)
-		if stock_frozen_upto_days:
-			stock_auth_role = frappe.db.get_value('Stock Settings', None,'stock_auth_role')
-			older_than_x_days_ago = (add_days(getdate(self.posting_date), stock_frozen_upto_days) <= date.today())
-			if older_than_x_days_ago and not stock_auth_role in frappe.get_roles():
-				frappe.throw(_("Not allowed to update stock transactions older than {0}").format(stock_frozen_upto_days), StockFreezeError)
 
 	def scrub_posting_time(self):
 		if not self.posting_time or self.posting_time == '00:0':

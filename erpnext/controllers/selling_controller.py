@@ -35,6 +35,7 @@ class SellingController(StockController):
 
 	def validate(self):
 		super(SellingController, self).validate()
+		self.validate_items()
 		self.validate_max_discount()
 		self.validate_selling_price()
 		self.set_qty_as_per_stock_uom()
@@ -51,9 +52,15 @@ class SellingController(StockController):
 	def set_missing_lead_customer_details(self):
 		if getattr(self, "customer", None):
 			from erpnext.accounts.party import _get_party_details
+			fetch_payment_terms_template = False
+			if (self.get("__islocal") or
+				self.company != frappe.db.get_value(self.doctype, self.name, 'company')):
+				fetch_payment_terms_template = True
+
 			party_details = _get_party_details(self.customer,
 				ignore_permissions=self.flags.ignore_permissions,
-				doctype=self.doctype, company=self.company)
+				doctype=self.doctype, company=self.company,
+				fetch_payment_terms_template=fetch_payment_terms_template)
 			if not self.meta.get_field("sales_team"):
 				party_details.pop("sales_team")
 
@@ -337,13 +344,29 @@ class SellingController(StockController):
 				po_nos = frappe.get_all('Sales Order', 'po_no', filters = {'name': ('in', sales_orders)})
 				self.po_no = ', '.join(list(set([d.po_no for d in po_nos if d.po_no])))
 
+	def validate_items(self):
+		# validate items to see if they have is_sales_item enabled
+		from erpnext.controllers.buying_controller import validate_item_type
+		validate_item_type(self, "is_sales_item", "sales")
+
 def check_active_sales_items(obj):
 	for d in obj.get("items"):
 		if d.item_code:
-			item = frappe.db.sql("""select docstatus,
-				income_account from tabItem where name = %s""",
-				d.item_code, as_dict=True)[0]
+			item = frappe.db.sql("""select i.docstatus, id.income_account
+				from `tabItem` i, `tabItem Default` id
+				where i.name=%s and id.parent=i.name and id.company=%s""",
+				(d.item_code, obj.company), as_dict=True)
 
-			if getattr(d, "income_account", None) and not item.income_account:
-				frappe.db.set_value("Item", d.item_code, "income_account",
-					d.income_account)
+			if getattr(d, "income_account", None):
+				doc = frappe.get_doc("Item", d.item_code)
+				if item and not item[0].income_account:
+					for default in doc.item_defaults:
+						if default.company == obj.company:
+							default.income_account = d.income_account
+							break
+				elif not item:
+					doc.append("item_defaults", {
+						"company": obj.company,
+						"income_account": d.income_account
+					})
+				doc.save(ignore_permissions=True)

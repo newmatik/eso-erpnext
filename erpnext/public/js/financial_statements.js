@@ -30,7 +30,7 @@ erpnext.financial_statements = {
 
 		frappe.route_options = {
 			"account": data.account,
-			"company": frappe.query_report_filters_by_name.company.get_value(),
+			"company": frappe.query_report.get_filter_value('company'),
 			"from_date": data.from_date || data.year_start_date,
 			"to_date": data.to_date || data.year_end_date,
 			"project": (project && project.length > 0) ? project[0].$input.val() : ""
@@ -69,6 +69,12 @@ function get_filters(){
 			"options": "Company",
 			"default": frappe.defaults.get_user_default("Company"),
 			"reqd": 1
+		},
+		{
+			"fieldname":"finance_book",
+			"label": __("Finance Book"),
+			"fieldtype": "Link",
+			"options": "Finance Book"
 		},
 		{
 			"fieldname":"from_fiscal_year",
