@@ -21,7 +21,16 @@ frappe.ui.form.on("Purchase Order", {
 				}
 			}
 		});
-
+		frm.set_query("supplier_part", "items", function(doc, cdt, cdn) {
+			var d = locals[cdt][cdn];
+			return {
+				filters: {
+					"supplier": frm.doc.supplier,
+					"parent": d.item_code
+				}
+			}
+		});
+		
 		frm.set_indicator_formatter('item_code',
 			function(doc) { return (doc.qty<=doc.received_qty) ? "green" : "orange" })
 
@@ -364,7 +373,7 @@ erpnext.buying.PurchaseOrderController = erpnext.buying.BuyingController.extend(
 				},
 				callback: function(r) {
 					if(r.exc) return;
-	
+
 					var i = 0;
 					var item_length = me.frm.doc.items.length;
 					while (i < item_length) {
@@ -379,17 +388,17 @@ erpnext.buying.PurchaseOrderController = erpnext.buying.BuyingController.extend(
 								d.qty = d.qty  - my_qty;
 								me.frm.doc.items[i].stock_qty = my_qty * me.frm.doc.items[i].conversion_factor;
 								me.frm.doc.items[i].qty = my_qty;
-	
+
 								frappe.msgprint("Assigning " + d.mr_name + " to " + d.item_code + " (row " + me.frm.doc.items[i].idx + ")");
 								if (qty > 0) {
 									frappe.msgprint("Splitting " + qty + " units of " + d.item_code);
 									var new_row = frappe.model.add_child(me.frm.doc, me.frm.doc.items[i].doctype, "items");
 									item_length++;
-	
+
 									for (var key in me.frm.doc.items[i]) {
 										new_row[key] = me.frm.doc.items[i][key];
 									}
-	
+
 									new_row.idx = item_length;
 									new_row["stock_qty"] = new_row.conversion_factor * qty;
 									new_row["qty"] = qty;
