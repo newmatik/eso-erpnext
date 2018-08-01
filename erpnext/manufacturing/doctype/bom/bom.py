@@ -718,15 +718,18 @@ def setup_bomline_alternative_items(items, bom, parent_item_code):
 									   'alt_item': item.alt_item})
 		if not docs:
 			d = frappe.new_doc('BOM Line Alternative Item')
-			d.bom = bom
-			d.item = parent_item_code
-			d.alt_item = item.alt_item
-			d.save()
-			frappe.db.commit()
+		else:
+			d = frappe.get_doc("BOM Line Alternative Item", docs[0].name)
+		d.bom = bom
+		d.item = parent_item_code
+		d.alt_item = item.alt_item
+		d.qty = item.qty
+		d.save()
+		frappe.db.commit()
 
 	return frappe.db.sql(
 		"""
-			select alt_item, name
+			select alt_item, qty, name
 			from `tabBOM Line Alternative Item`
 		    where bom=%s and item=%s
 		""", (bom, parent_item_code), as_dict=1)
@@ -757,16 +760,54 @@ def remove_bomline_alt_items(bom, parent_item_code):
 
 
 @frappe.whitelist()
-def get_bomline_alternative_items(bom, parent_item_code):
+def get_bomline_alternative_items(bom, amended_from, parent_item_code):
 	"""
 		Get related BOM Item, BOM Line Alternative Item
+		In the case of amend process the first time the user asks for the doctype
+		get the list from amended_from even if no save.
+		Its the dom state like just hitting duplicate button with no actions.
 	"""
-	return frappe.db.sql(
+	items_bom = frappe.db.sql(
 		"""
-			select alt_item, name
+			select alt_item, name, FORMAT(qty, 2) as qty
 			from `tabBOM Line Alternative Item`
 		    where bom=%s and item=%s order by idx
 		""", (bom, parent_item_code), as_dict=1)
+	if len(items_bom) > 0:
+		return items_bom
+	return frappe.db.sql(
+		"""
+			select alt_item, name, FORMAT(qty, 2) as qty
+			from `tabBOM Line Alternative Item`
+		    where bom=%s and item=%s order by idx
+		""", (amended_from, parent_item_code), as_dict=1)
+
+
+@frappe.whitelist()
+def duplicate_alt_items(bom, amended_from):
+	"""
+		Duplicate Alternative during amend process only the first time
+		save is hit
+	"""
+	to_duplicate =  frappe.db.sql(
+		"""
+			select  name
+			from `tabBOM Line Alternative Item`
+		    where bom=%s order by idx
+		""", (amended_from), as_dict=1)
+	for item in to_duplicate:
+		old_item = frappe.get_doc("BOM Line Alternative Item", item['name'])
+		new_alt_item = frappe.new_doc("BOM Line Alternative Item")
+		new_alt_item.item = old_item.item
+		new_alt_item.qty = old_item.qty
+		new_alt_item.alt_item = old_item.alt_item
+		new_alt_item.bom = bom
+		new_alt_item.amended_from_bom = amended_from
+		new_alt_item.save()
+		frappe.db.commit()
+
+
+
 def add_additional_cost(stock_entry, work_order):
 	# Add non stock items cost in the additional cost
 	bom = frappe.get_doc('BOM', work_order.bom_no)
