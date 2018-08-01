@@ -120,7 +120,6 @@ frappe.ui.form.on("BOM", {
 			}
 		});
 	},
-
 	routing: function(frm) {
 		if (frm.doc.routing) {
 			frappe.call({
@@ -136,7 +135,31 @@ frappe.ui.form.on("BOM", {
 				}
 			});
 		}
+	},
+	before_save: function(frm){
+		// includes New its the first time save during amend process
+		// this so we can duplicate Alternative Item only ONCE
+		if (frm.doc.name.includes(['New'])) {
+				cur_frm.duplicate_alt_items_action = true;
+		}
+	},
+	after_save: function(frm) {
+		// we have the new series name to update duplicate reference
+		if (cur_frm.duplicate_alt_items_action && cur_frm.doc.amended_from) {
+			 frappe.call({
+				 method: "erpnext.manufacturing.doctype.bom.bom.duplicate_alt_items",
+				 freeze: true,
+				 args: {
+					 bom: cur_frm.doc.name,
+					 amended_from: cur_frm.doc.amended_from
+				 },
+				 callback: (r) => {
+					 cur_frm.duplicate_alt_items_action = false;
+				 }
+			 })
+		}
 	}
+
 });
 
 erpnext.bom.BomController = erpnext.TransactionController.extend({
@@ -367,6 +390,7 @@ frappe.ui.form.on("BOM Operation", "workstation", function(frm, cdt, cdn) {
 	});
 });
 
+
 frappe.ui.form.on("BOM Item", "qty", function(frm, cdt, cdn) {
 	var d = locals[cdt][cdn];
 	d.stock_qty = d.qty * d.conversion_factor;
@@ -435,7 +459,10 @@ frappe.ui.form.on("BOM Item", "setup_alt_item_btn", function(frm, cdt, cdn) {
 			cdt: cdt,
 			item_code: d.item_code,
 			has_alternatives: d.has_alternatives,
-			bom: d.parent
+			bom: d.parent,
+			amended_from: cur_frm.doc.amended_from || null,
+			parent_d: d.parent,
+			init_qty: d.qty
 		})
 	}
 });
@@ -447,9 +474,12 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 	const cdn = opts.cdn;
 	const cdt = opts.cdt;
 	const has_alternatives = opts.has_alternatives;
+	const init_qty = opts.init_qty.toFixed(2);
+	const parent_d = opts.parent_d;
+	const amended_from = opts.amended_from;
 
 	// headers for html rendering
-	var headers = [ __("Alternative Item"), __("") ]
+	var headers = [ __("Alternative Item"),  __("Qty"), __("")]
 	// Global in the scope. Holds the child of child.
 	cur_frm.alt_list_data = [];
 	cur_frm.render_alts_items = function(d, headers, data){
@@ -481,10 +511,13 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 				onchange: function() {
 					var item_code = this.get_value();
   				  	if (item_code) {
-						d.set_value("add_alt_item", null);
-  				  		cur_frm.alt_list_data.push({"alt_item": item_code});
-						cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data)
-						cur_frm.set_alt_items()
+								d.set_value("add_alt_item", null);
+								cur_frm.alt_list_data.push({
+										"alt_item": item_code,
+										"qty": init_qty
+									});
+								cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data)
+								cur_frm.set_alt_items()
 					}
 				},
 				get_query: () => {
@@ -517,6 +550,7 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 						d.set_value("add_regular_item", null);
 						cur_frm.alt_list_data.push({
 							"alt_item": item_code,
+							"qty": init_qty
 						});
 						cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data)
 						cur_frm.set_alt_items()
@@ -535,7 +569,7 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 				freeze: true,
 				args: {
 					items: cur_frm.alt_list_data,
-					bom: bom,
+					bom: parent_d,
 					parent_item_code: parent_item_code
 				},
 				callback:function(r){
@@ -553,6 +587,7 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 		freeze: true,
 		args: {
 			bom: bom,
+			amended_from: amended_from,
 			parent_item_code: parent_item_code
 		},
 		callback:function(r){
@@ -566,6 +601,9 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 		cur_frm.alt_list_data.splice(i, 1);
 		cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data)
 		cur_frm.set_alt_items()
+	}
+	cur_frm.update_qty = function(i){
+		cur_frm.alt_list_data[i].qty = $("#data-qty-"+i).val()
 	}
 	d.show();
 }
