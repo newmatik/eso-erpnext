@@ -429,7 +429,8 @@ cur_frm.select_workline_alternate_item = function(opts) {
 		freeze: true,
 		args: {
 			bom: bom,
-			parent_item_code: item_code
+			parent_item_code: item_code,
+			amended_from: null
 		},
 		callback:function(r){
 			cur_frm.alt_list_data =  r.message || [];
