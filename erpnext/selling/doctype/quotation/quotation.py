@@ -32,7 +32,7 @@ class Quotation(SellingController):
 		self.validate_valid_till()
 		if self.items:
 			self.with_items = 1
-			
+
 	def validate_valid_till(self):
 		if self.valid_till and self.valid_till < self.transaction_date:
 			frappe.throw(_("Valid till date cannot be before transaction date"))
@@ -132,10 +132,14 @@ def _make_sales_order(source_name, target_doc=None, ignore_permissions=False):
 		if customer:
 			target.customer = customer.name
 			target.customer_name = customer.customer_name
+		if target.tc_name:
+			target.tc_name = ''
+			target.terms = ''
 		target.ignore_pricing_rule = 1
 		target.flags.ignore_permissions = ignore_permissions
 		target.run_method("set_missing_values")
 		target.run_method("calculate_taxes_and_totals")
+
 
 	def update_item(obj, target, source_parent):
 		target.stock_qty = flt(obj.qty) * flt(obj.conversion_factor)
@@ -209,7 +213,7 @@ def _make_sales_invoice(source_name, target_doc=None, ignore_permissions=False):
 			}
 		}, target_doc, set_missing_values, ignore_permissions=ignore_permissions)
 
-	return doclist	
+	return doclist
 
 def _make_customer(source_name, ignore_permissions=False):
 	quotation = frappe.db.get_value("Quotation", source_name, ["lead", "order_type", "customer"])
