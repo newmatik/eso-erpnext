@@ -958,7 +958,10 @@ def make_delivery_note(source_name, target_doc=None, kwargs=None):
 			target.update(get_company_address(target.company))
 
 		if target.company_address:
-			target.update(get_fetch_values("Delivery Note", "company_address", target.company_address))
+			target.update(get_fetch_values("Delivery Note", 'company_address', target.company_address))
+		if target.tc_name:
+			target.tc_name = ''
+			target.terms = ''
 
 		# if invoked in bulk creation, validations are ignored and thus this method is nerver invoked
 		if frappe.flags.bulk_transaction:
