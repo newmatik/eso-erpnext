@@ -116,7 +116,7 @@ class SalesOrder(SellingController):
 						d.delivery_date = self.delivery_date
 					if getdate(self.transaction_date) > getdate(d.delivery_date):
 						frappe.msgprint(_("Expected Delivery Date should be after Sales Order Date"),
-							indicator='orange', title=_('Warning'))		
+							indicator='orange', title=_('Warning'))
 				if getdate(self.delivery_date) != getdate(max_delivery_date):
 					self.delivery_date = max_delivery_date
 			else:
@@ -536,6 +536,9 @@ def make_delivery_note(source_name, target_doc=None):
 		target.update(get_company_address(target.company))
 		if target.company_address:
 			target.update(get_fetch_values("Delivery Note", 'company_address', target.company_address))
+		if target.tc_name:
+			target.tc_name = ''
+			target.terms = ''
 
 	def update_item(source, target, source_parent):
 		target.base_amount = (flt(source.qty) - flt(source.delivered_qty)) * flt(source.base_rate)
