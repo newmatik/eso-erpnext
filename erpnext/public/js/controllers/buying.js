@@ -26,7 +26,8 @@ erpnext.buying.BuyingController = erpnext.TransactionController.extend({
 			};
 		});
 
-		if (this.frm.doc.__islocal) {
+		if (this.frm.doc.__islocal
+			&& frappe.meta.has_field(this.frm.doc.doctype, "disable_rounded_total")) {
 			this.frm.set_value("disable_rounded_total", cint(frappe.sys_defaults.disable_rounded_total));
 		}
 
@@ -237,7 +238,7 @@ erpnext.buying.BuyingController = erpnext.TransactionController.extend({
 		if (doc.auto_repeat) {
 			frappe.call({
 				method:"frappe.desk.doctype.auto_repeat.auto_repeat.update_reference",
-				args:{ 
+				args:{
 					docname: doc.auto_repeat,
 					reference:doc.name
 				},
@@ -362,4 +363,3 @@ erpnext.buying.get_items_from_product_bundle = function(frm) {
 	});
 	dialog.show();
 }
-
