@@ -10,17 +10,21 @@
 	  {% if (data.length)  %}
 		  {% for (var i = 0; i < data.length; i++) { %}
 			  <tr style="text-align: center" id="data-list-{{i}}">
-				<td>{{ data[i].alt_item }}</td>
+				<td>{{ data[i].alt_item }} </td>
         <td width="30%">
+          <div class="control-input-wrapper">
             <input style="text-align: center"
                   id="data-qty-{{i}}"
-                  class="input-with-feedback form-control bold"
+                  class="control-value bold"
                   value="{{ data[i].qty }}"
                   onchange="cur_frm.update_qty({{ i }})"
-                  type="number" step="0.01"/>
+                  type="number" step="0.01"/
+                  {% if (cur_frm.doc.docstatus == 1 && !cur_frm._this_session_alts.includes(data[i].alt_item) ) { %} disabled  {% } %}
+                  >
+          </div>
         </td>
 				<td>
-            <button id="data-list-{{i}}" onclick="cur_frm.remove_row({{ i }})" type="button" class="btn btn-danger"><span class="glyphicon glyphicon-trash"></button>
+            <button {% if (cur_frm.doc.docstatus == 1 && !cur_frm._this_session_alts.includes(data[i].alt_item) ) { %} style="visibility: hidden;"  {% } %}  id="data-list-{{i}}" onclick="cur_frm.remove_row({{ i }})" type="button" class="btn btn-danger" ><span class="glyphicon glyphicon-trash"></button>
         </td>
 			  </tr>
 		  {% } %}
