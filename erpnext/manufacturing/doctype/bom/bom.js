@@ -9,6 +9,7 @@ frappe.ui.form.on("BOM", {
 		frm.add_fetch("item", "image", "image");
 		frm.add_fetch("item", "item_name", "item_name");
 		frm.add_fetch("item", "stock_uom", "uom");
+		cur_frm._this_session_alts = []
 
 		frm.set_query("bom_no", "items", function() {
 			return {
@@ -500,6 +501,7 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 										"alt_item": item_code,
 										"qty": init_qty
 									});
+								cur_frm._this_session_alts.push(item_code)
 								cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data)
 								cur_frm.set_alt_items()
 					}
@@ -536,6 +538,7 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 							"alt_item": item_code,
 							"qty": init_qty
 						});
+						cur_frm._this_session_alts.push(item_code)
 						cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data)
 						cur_frm.set_alt_items()
 				  }
