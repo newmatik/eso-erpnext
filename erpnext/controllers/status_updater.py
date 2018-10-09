@@ -129,7 +129,7 @@ class StatusUpdater(Document):
 					self.status = s[0]
 					break
 				elif s[1].startswith("eval:"):
-					if frappe.safe_eval(s[1][5:], None, { "self": self.as_dict(), "getdate": getdate, 
+					if frappe.safe_eval(s[1][5:], None, { "self": self.as_dict(), "getdate": getdate,
 							"nowdate": nowdate, "get_value": frappe.db.get_value }):
 						self.status = s[0]
 						break
@@ -203,17 +203,19 @@ class StatusUpdater(Document):
 			self.limits_crossed_error(args, item)
 
 	def limits_crossed_error(self, args, item):
-		'''Raise exception for limits crossed'''
-		frappe.throw(_('This document is over limit by {0} {1} for item {4}. Are you making another {3} against the same {2}?')
-			.format(
-				frappe.bold(_(item["target_ref_field"].title())),
-				frappe.bold(item["reduce_by"]),
-				frappe.bold(_(args.get('target_dt'))),
-				frappe.bold(_(self.doctype)),
-				frappe.bold(item.get('item_code'))
-			) + '<br><br>' +
-				_('To allow over-billing or over-ordering, update "Allowance" in Stock Settings or the Item.'),
-			title = _('Limit Crossed'))
+		# ESO Change
+		pass
+		# '''Raise exception for limits crossed'''
+		# frappe.throw(_('This document is over limit by {0} {1} for item {4}. Are you making another {3} against the same {2}?')
+		# 	.format(
+		# 		frappe.bold(_(item["target_ref_field"].title())),
+		# 		frappe.bold(item["reduce_by"]),
+		# 		frappe.bold(_(args.get('target_dt'))),
+		# 		frappe.bold(_(self.doctype)),
+		# 		frappe.bold(item.get('item_code'))
+		# 	) + '<br><br>' +
+		# 		_('To allow over-billing or over-ordering, update "Allowance" in Stock Settings or the Item.'),
+		# 	title = _('Limit Crossed'))
 
 	def update_qty(self, update_modified=True):
 		"""Updates qty or amount at row level
@@ -256,7 +258,7 @@ class StatusUpdater(Document):
 
 			if args['detail_id']:
 				if not args.get("extra_cond"): args["extra_cond"] = ""
-				
+
 				frappe.db.sql("""update `tab%(target_dt)s`
 					set %(target_field)s = (
 						(select ifnull(sum(%(source_field)s), 0)
@@ -281,7 +283,7 @@ class StatusUpdater(Document):
 		"""Update percent field in parent transaction"""
 
 		self._update_modified(args, update_modified)
-		
+
 		if args.get('target_parent_field'):
 			frappe.db.sql("""update `tab%(target_parent_dt)s`
 				set %(target_parent_field)s = round(
