@@ -48,6 +48,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -80,6 +81,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -111,6 +113,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -146,6 +149,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -178,6 +182,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -208,6 +213,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -240,6 +246,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -272,6 +279,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -304,6 +312,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -336,6 +345,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 1,
@@ -367,6 +377,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -401,6 +412,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -430,6 +442,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -461,6 +474,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -493,6 +507,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -523,6 +538,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -555,6 +571,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -587,6 +604,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -616,6 +634,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -649,6 +668,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -682,6 +702,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -713,6 +734,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -744,6 +766,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -776,6 +799,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -808,6 +832,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -838,6 +863,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -873,6 +899,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -905,6 +932,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -935,6 +963,7 @@
   },
   {
    "allow_bulk_edit": 0,
+   "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
@@ -1074,7 +1103,7 @@
  "issingle": 0,
  "istable": 1,
  "max_attachments": 0,
- "modified": "2018-07-12 16:16:16.815165",
+ "modified": "2018-11-28 14:28:08.251616",
  "modified_by": "Administrator",
  "module": "Manufacturing",
  "name": "BOM Item",

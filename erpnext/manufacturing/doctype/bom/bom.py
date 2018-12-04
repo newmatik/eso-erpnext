@@ -558,7 +558,6 @@ def get_bom_items_as_dict(bom, company, qty=1, fetch_exploded=1, fetch_scrap_ite
 	query = """select
 				bom_item.item_code,
 				bom_item.idx,
-				bom_item.set_alternative_items,
 				item.item_name,
 				sum(bom_item.stock_qty/ifnull(bom.quantity, 1)) * %(qty)s as qty,
 				item.description,
@@ -615,7 +614,8 @@ def get_bom_items_as_dict(bom, company, qty=1, fetch_exploded=1, fetch_scrap_ite
 	# BOM Alternative Items
 	for item, item_details in item_dict.items():
 		item_details['original_item'] = item_details['item_code']
-		if item_details['set_alternative_items']:
+                if 'set_alternative_items' in item_details.keys():
+                    if item_details['set_alternative_items']:
 			item_details['alt_items'] = get_bomline_alternative_items(bom, item)
 	return item_dict
 
