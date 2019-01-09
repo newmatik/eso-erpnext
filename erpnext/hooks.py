@@ -11,8 +11,8 @@ app_email = "info@erpnext.com"
 app_license = "GNU General Public License (v3)"
 source_link = "https://github.com/frappe/erpnext"
 
-develop_version = '11.x.x-develop'
-staging_version = '11.0.0-beta'
+develop_version = '12.x.x-develop'
+staging_version = '11.0.3-beta.34'
 
 error_report_email = "support@erpnext.com"
 
@@ -25,7 +25,10 @@ web_include_css = "assets/css/erpnext-web.css"
 
 doctype_js = {
 	"Communication": "public/js/communication.js",
+	"Event": "public/js/event.js"
 }
+
+welcome_email = "erpnext.setup.utils.welcome_email"
 
 # setup wizard
 setup_wizard_requires = "assets/erpnext/js/setup_wizard.js"
@@ -130,6 +133,14 @@ website_route_rules = [
 	{"from_route": "/admissions", "to_route": "Student Admission"},
 	{"from_route": "/boms", "to_route": "BOM"},
 	{"from_route": "/timesheets", "to_route": "Timesheet"},
+	{"from_route": "/material-requests", "to_route": "Material Request"},
+	{"from_route": "/material-requests/<path:name>", "to_route": "material_request_info",
+		"defaults": {
+			"doctype": "Material Request",
+			"parents": [{"label": _("Material Request"), "route": "material-requests"}]
+		}
+	},
+	{"from_route": "/customer-provided-items", "to_route": "customer_provided_item"}
 ]
 
 standard_portal_menu_items = [
@@ -152,6 +163,8 @@ standard_portal_menu_items = [
 	{"title": _("Newsletter"), "route": "/newsletters", "reference_doctype": "Newsletter"},
 	{"title": _("Admission"), "route": "/admissions", "reference_doctype": "Student Admission"},
 	{"title": _("Certification"), "route": "/certification", "reference_doctype": "Certification Application"},
+	{"title": _("Material Request"), "route": "/material-requests", "reference_doctype": "Material Request", "role": "Customer"},
+	{"title": _("Customer Provided Item"), "route": "/customer-provided-items", "reference_doctype": "Item", "role": "Customer"}
 ]
 
 default_roles = [
@@ -165,6 +178,7 @@ has_website_permission = {
 	"Quotation": "erpnext.controllers.website_list_for_contact.has_website_permission",
 	"Sales Invoice": "erpnext.controllers.website_list_for_contact.has_website_permission",
 	"Supplier Quotation": "erpnext.controllers.website_list_for_contact.has_website_permission",
+	"Material Request": "erpnext.controllers.website_list_for_contact.has_website_permission",
 	"Delivery Note": "erpnext.controllers.website_list_for_contact.has_website_permission",
 	"Issue": "erpnext.support.doctype.issue.issue.has_website_permission",
 	"Timesheet": "erpnext.controllers.website_list_for_contact.has_website_permission",
@@ -222,7 +236,8 @@ doc_events = {
 scheduler_events = {
 	"hourly": [
 		'erpnext.hr.doctype.daily_work_summary_group.daily_work_summary_group.trigger_emails',
-		"erpnext.accounts.doctype.subscription.subscription.process_all"
+		"erpnext.accounts.doctype.subscription.subscription.process_all",
+		"erpnext.erpnext_integrations.doctype.amazon_mws_settings.amazon_mws_settings.schedule_get_order_details"
 	],
 	"daily": [
 		"erpnext.stock.reorder_item.reorder_item",
@@ -238,14 +253,18 @@ scheduler_events = {
 		"erpnext.stock.doctype.serial_no.serial_no.update_maintenance_status",
 		"erpnext.buying.doctype.supplier_scorecard.supplier_scorecard.refresh_scorecards",
 		"erpnext.setup.doctype.company.company.cache_companies_monthly_sales_history",
-		"erpnext.manufacturing.doctype.bom_update_tool.bom_update_tool.update_latest_price_in_all_boms",
 		"erpnext.assets.doctype.asset.asset.update_maintenance_status",
 		"erpnext.assets.doctype.asset.asset.make_post_gl_entry",
 		"erpnext.crm.doctype.contract.contract.update_status_for_contracts",
-		"erpnext.projects.doctype.project.project.update_project_sales_billing"
-  ],
+		"erpnext.projects.doctype.project.project.update_project_sales_billing",
+		"erpnext.quality_management.doctype.quality_review.quality_review.review"
+	],
+	"daily_long": [
+		"erpnext.manufacturing.doctype.bom_update_tool.bom_update_tool.update_latest_price_in_all_boms"
+	],
 	"monthly": [
-		"erpnext.accounts.doctype.sales_invoice.sales_invoice.booked_deferred_revenue",
+		"erpnext.accounts.deferred_revenue.convert_deferred_revenue_to_income",
+		"erpnext.accounts.deferred_revenue.convert_deferred_expense_to_expense",
 		"erpnext.hr.utils.allocate_earned_leaves"
 	]
 }
