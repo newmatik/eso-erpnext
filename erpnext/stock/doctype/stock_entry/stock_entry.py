@@ -32,9 +32,6 @@ form_grid_templates = {
 }
 
 class StockEntry(StockController):
-	def get_feed(self):
-		return _("From {0} to {1}").format(self.from_warehouse, self.to_warehouse)
-
 	def onload(self):
 		for item in self.get("items"):
 			item.update(get_bin_details(item.item_code, item.s_warehouse))
