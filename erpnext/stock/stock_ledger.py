@@ -475,8 +475,8 @@ def get_valuation_rate(item_code, warehouse, voucher_type, voucher_no,
 			valuation_rate = frappe.db.get_value('Item Price',
 				dict(item_code=item_code, buying=1, currency=currency),
 				'price_list_rate')
-        if item_code.startswith("K-"): # customer provided
-            allow_zero_rate = True
+		if item_code.startswith("K-"): # customer provided
+			allow_zero_rate = True
 	if not allow_zero_rate and not valuation_rate and raise_error_if_no_rate \
 			and cint(erpnext.is_perpetual_inventory_enabled(company)):
 		frappe.local.message_log = []
