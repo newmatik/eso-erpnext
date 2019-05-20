@@ -614,9 +614,9 @@ def get_bom_items_as_dict(bom, company, qty=1, fetch_exploded=1, fetch_scrap_ite
 	# BOM Alternative Items
 	for item, item_details in item_dict.items():
 		item_details['original_item'] = item_details['item_code']
-                if 'set_alternative_items' in item_details.keys():
-                    if item_details['set_alternative_items']:
-			item_details['alt_items'] = get_bomline_alternative_items(bom, item)
+		if 'set_alternative_items' in item_details.keys():
+			if item_details['set_alternative_items']:
+				item_details['alt_items'] = get_bomline_alternative_items(bom, item)
 	return item_dict
 
 @frappe.whitelist()
