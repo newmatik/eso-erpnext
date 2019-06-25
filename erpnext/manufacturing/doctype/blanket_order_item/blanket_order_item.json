@@ -145,7 +145,7 @@
   {
    "allow_bulk_edit": 0, 
    "allow_in_quick_entry": 0, 
-   "allow_on_submit": 0, 
+   "allow_on_submit": 1, 
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
@@ -280,7 +280,7 @@
  "issingle": 0, 
  "istable": 1, 
  "max_attachments": 0, 
- "modified": "2018-06-14 07:04:14.050836", 
+ "modified": "2019-06-25 06:52:06.646777", 
  "modified_by": "Administrator", 
  "module": "Manufacturing", 
  "name": "Blanket Order Item", 
