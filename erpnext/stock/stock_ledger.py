@@ -2015,7 +2015,7 @@ def get_valuation_rate(
 		sub_solutions += "<li>" + _("Mention Valuation Rate in the Item master.") + "</li></ul>"
 		msg = message + solutions + sub_solutions + "</li>"
 
-		frappe.throw(msg=msg, title=_("Valuation Rate Missing"))
+		# frappe.throw(msg=msg, title=_("Valuation Rate Missing"))
 
 
 def update_qty_in_future_sle(args, allow_negative_stock=False):
