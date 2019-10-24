@@ -841,6 +841,7 @@
    "label": "Payment Terms"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "payment_terms_template",
    "fieldtype": "Link",
    "label": "Payment Terms Template",
@@ -848,6 +849,7 @@
    "print_hide": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "payment_schedule",
    "fieldtype": "Table",
    "label": "Payment Schedule",
@@ -1176,7 +1178,7 @@
  "icon": "fa fa-file-text",
  "idx": 105,
  "is_submittable": 1,
- "modified": "2019-09-12 02:13:56.308839",
+ "modified": "2019-10-23 12:32:39.180308",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",
