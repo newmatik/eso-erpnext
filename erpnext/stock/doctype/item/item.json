@@ -637,6 +637,7 @@
    "fieldname": "supplier_items",
    "fieldtype": "Table",
    "label": "Supplier Items",
+   "no_copy": 1,
    "options": "Item Supplier"
   },
   {
@@ -1042,7 +1043,7 @@
  "idx": 2,
  "image_field": "image",
  "max_attachments": 1,
- "modified": "2019-12-13 12:15:56.197246",
+ "modified": "2020-01-09 04:08:23.286607",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Item",
