@@ -475,6 +475,15 @@ erpnext.utils.update_child_items = function(opts) {
 		})
 	}
 
+	if (frm.doc.doctype == 'Sales Order') {
+		fields.splice(2, 0, {
+			fieldtype: 'Date',
+			fieldname: "reqd_by_date",
+			in_list_view: 1,
+			label: __("Reqd By Date")
+		})
+	}
+
 	const dialog = new frappe.ui.Dialog({
 		title: __("Update Items"),
 		fields: [
@@ -518,6 +527,7 @@ erpnext.utils.update_child_items = function(opts) {
 			"docname": d.name,
 			"name": d.name,
 			"item_code": d.item_code,
+			"reqd_by_date": d.reqd_by_date,
 			"delivery_date": d.delivery_date,
 			"schedule_date": d.schedule_date,
 			"qty": d.qty,
