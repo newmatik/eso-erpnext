@@ -113,12 +113,14 @@
    "label": "New Leaves Allocated"
   },
   {
+   "allow_on_submit": 1,
    "default": "0",
    "fieldname": "carry_forward",
    "fieldtype": "Check",
    "label": "Add unused leaves from previous allocations"
   },
   {
+   "allow_on_submit": 1,
    "depends_on": "carry_forward",
    "fieldname": "unused_leaves",
    "fieldtype": "Float",
@@ -214,7 +216,7 @@
  "icon": "fa fa-ok",
  "idx": 1,
  "is_submittable": 1,
- "modified": "2019-08-08 15:08:42.440909",
+ "modified": "2020-07-13 10:37:15.492830",
  "modified_by": "Administrator",
  "module": "HR",
  "name": "Leave Allocation",
