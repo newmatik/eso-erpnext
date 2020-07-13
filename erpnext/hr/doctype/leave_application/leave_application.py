@@ -54,6 +54,9 @@ class LeaveApplication(Document):
 		self.create_leave_ledger_entry()
 		self.reload()
 
+	def on_update(self):
+		self.create_leave_ledger_entry()
+
 	def on_cancel(self):
 		self.create_leave_ledger_entry(submit=False)
 		self.status = "Cancelled"
@@ -597,7 +600,7 @@ def get_leave_entries(employee, leave_type, from_date, to_date):
 			is_carry_forward, is_expired
 		FROM `tabLeave Ledger Entry`
 		WHERE employee=%(employee)s AND leave_type=%(leave_type)s
-			AND docstatus=1 
+			AND docstatus=1
 			AND (leaves<0
 				OR is_expired=1)
 			AND (from_date between %(from_date)s AND %(to_date)s
