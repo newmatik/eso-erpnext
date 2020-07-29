@@ -265,12 +265,6 @@ def get_contact(contact_name):
 			).format(contact_name, contact_name))
 	if not contact.phone:
 		contact.phone = contact.mobile_no
-	contact.phone_prefix = contact.phone[:3]
-	contact.phone = re.sub('[^A-Za-z0-9]+', '', contact.phone[3:])
-	contact.email = contact.email_id
-	contact.title = 'MS'
-	if contact.gender == 'Male':
-		contact.title = 'MR'
 	return contact
 
 
@@ -285,11 +279,6 @@ def get_company_contact():
 	], as_dict=1)
 	if not contact.phone:
 		contact.phone = contact.mobile_no
-	contact.phone_prefix = contact.phone[:3]
-	contact.phone = re.sub('[^A-Za-z0-9]+', '', contact.phone[3:])
-	contact.title = 'MS'
-	if contact.gender == 'Male':
-		contact.title = 'MR'
 	return contact
 
 def match_parcel_service_type_carrier(shipment_prices, reference):

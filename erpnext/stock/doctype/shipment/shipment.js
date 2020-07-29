@@ -171,22 +171,20 @@ frappe.ui.form.on('Shipment', {
 		}
 	},
 	set_pickup_company_address: function(frm) {
-        frappe.db.get_value('Address', {
-				address_title: frm.doc.pickup_company, is_your_company_address: 1}
-			, 
-			'name', 
-			(r) => {
-				if (r) {
-					frm.set_value("pickup_address_name", r.name);
-				}
-        	}
-		);
+		frappe.db.get_value('Address', {
+			address_title: frm.doc.pickup_company, 
+			is_your_company_address: 1
+		}, 'name', (r) => {
+			frm.set_value("pickup_address_name", r.name);
+		});
 	},
 	set_delivery_company_address: function(frm) {
-        frappe.db.get_value('Address', {
-			address_title: frm.doc.delivery_company, is_your_company_address: 1}, 'name', (r) => {
-				frm.set_value("delivery_address_name", r.name);
-        });
+		frappe.db.get_value('Address', {
+			address_title: frm.doc.delivery_company, 
+			is_your_company_address: 1
+		}, 'name', (r) => {
+			frm.set_value("delivery_address_name", r.name);
+		});
 	},
 	pickup_from_type: function(frm) {
 		if (frm.doc.pickup_from_type == 'Company') {
@@ -311,7 +309,7 @@ frappe.ui.form.on('Shipment', {
 		}
 	},
 	set_company_contact: function(frm, delivery_type) {
-        frappe.db.get_value('User', {name: frappe.session.user}, ['full_name', 'last_name', 'email', 'phone', 'mobile_no'], (r) => {
+		frappe.db.get_value('User', { name: frappe.session.user }, ['full_name', 'last_name', 'email', 'phone', 'mobile_no'], (r) => {
 			if (!(r.last_name && r.email && (r.phone || r.mobile_no))) {
 				if (delivery_type == 'Delivery') {
 					frm.set_value('delivery_company', '')
@@ -346,18 +344,18 @@ frappe.ui.form.on('Shipment', {
 					frm.set_value('pickup_contact_email', r.email)
 				}
 			}
-        });
+		});
 	},
 	pickup_company: function(frm) {
 		if (frm.doc.pickup_from_type == 'Company'  && frm.doc.pickup_company) {
-	        frm.trigger('set_pickup_company_address')
-	        frm.events.set_company_contact(frm, 'Pickup')
+			frm.trigger('set_pickup_company_address')
+			frm.events.set_company_contact(frm, 'Pickup')
 		}
 	},
 	delivery_company: function(frm) {
 		if (frm.doc.delivery_to_type == 'Company' && frm.doc.delivery_company) {
-	        frm.trigger('set_delivery_company_address')
-	        frm.events.set_company_contact(frm, 'Delivery')
+			frm.trigger('set_delivery_company_address')
+			frm.events.set_company_contact(frm, 'Delivery')
 		}
 	},
 	delivery_customer: function(frm) {
