@@ -27,6 +27,7 @@ class Asset(AccountsController):
 			self.validate_expected_value_after_useful_life()
 
 		self.status = self.get_status()
+		self.flags.ignore_mandatory = True
 
 	def on_submit(self):
 		self.validate_in_use_date()
