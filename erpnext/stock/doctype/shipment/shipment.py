@@ -12,8 +12,8 @@ from frappe.model.document import Document
 from erpnext.accounts.party import get_party_shipping_address
 from frappe.contacts.doctype.contact.contact import get_default_contact
 from frappe.contacts.doctype.address.address import get_address_display
-from frappe.integrations.doctype.letmeship.letmeship import LETMESHIP_PROVIDER, get_letmeship_available_services, create_letmeship_shipment, get_letmeship_label, get_letmeship_tracking_data
-from frappe.integrations.doctype.packlink.packlink import PACKLINK_PROVIDER, get_packlink_available_services, create_packlink_shipment, get_packlink_label, get_packlink_tracking_data
+from erpnext.erpnext_integrations.doctype.letmeship.letmeship import LETMESHIP_PROVIDER, get_letmeship_available_services, create_letmeship_shipment, get_letmeship_label, get_letmeship_tracking_data
+from erpnext.erpnext_integrations.doctype.packlink.packlink import PACKLINK_PROVIDER, get_packlink_available_services, create_packlink_shipment, get_packlink_label, get_packlink_tracking_data
 from erpnext.stock.doctype.parcel_service_type.parcel_service_type import match_parcel_service_type_alias
 from frappe.utils import today
 
