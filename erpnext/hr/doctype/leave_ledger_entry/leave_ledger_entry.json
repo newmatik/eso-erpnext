@@ -67,7 +67,8 @@
    "fieldname": "leaves",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Leaves"
+   "label": "Leaves",
+   "read_only": 1
   },
   {
    "fieldname": "from_date",
