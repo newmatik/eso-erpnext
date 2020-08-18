@@ -14,6 +14,7 @@ from frappe.contacts.doctype.contact.contact import get_default_contact
 from frappe.contacts.doctype.address.address import get_address_display
 from erpnext.erpnext_integrations.doctype.letmeship.letmeship import LETMESHIP_PROVIDER, get_letmeship_available_services, create_letmeship_shipment, get_letmeship_label, get_letmeship_tracking_data
 from erpnext.erpnext_integrations.doctype.packlink.packlink import PACKLINK_PROVIDER, get_packlink_available_services, create_packlink_shipment, get_packlink_label, get_packlink_tracking_data
+from erpnext.erpnext_integrations.doctype.sendcloud.sendcloud import SENDCLOUD_PROVIDER, get_sendcloud_available_services, create_sendcloud_shipment, get_sendcloud_label, get_sendcloud_tracking_data
 from erpnext.stock.doctype.parcel_service_type.parcel_service_type import match_parcel_service_type_alias
 from frappe.utils import today
 
@@ -48,6 +49,7 @@ def fetch_shipping_rates(pickup_from_type, delivery_to_type, pickup_address_name
 	shipment_prices = []
 	letmeship_enabled = frappe.db.get_single_value('LetMeShip','enabled')
 	packlink_enabled = frappe.db.get_single_value('Packlink','enabled')
+	sendcloud_enabled = frappe.db.get_single_value('SendCloud','enabled')
 	pickup_address = get_address(pickup_address_name)
 	delivery_address = get_address(delivery_address_name)
 	if letmeship_enabled:
@@ -84,6 +86,12 @@ def fetch_shipping_rates(pickup_from_type, delivery_to_type, pickup_address_name
 		)
 		packlink_prices = match_parcel_service_type_carrier(packlink_prices, ['carrier_name', 'carrier'])
 		shipment_prices = shipment_prices + packlink_prices
+	if sendcloud_enabled and pickup_from_type == 'Company':
+		sendcloud_prices = get_sendcloud_available_services(
+			delivery_address=delivery_address,
+			shipment_parcel=shipment_parcel
+		)
+		shipment_prices = shipment_prices + sendcloud_prices
 	shipment_prices = sorted(shipment_prices, key=lambda k:k['total_price'])
 	return shipment_prices
 
@@ -137,6 +145,18 @@ def create_shipment(shipment, pickup_from_type, delivery_to_type, pickup_address
 			delivery_contact=delivery_contact,
 			service_info=service_info,
 		)
+
+	if service_info['service_provider'] == SENDCLOUD_PROVIDER:
+		shipment_info = create_sendcloud_shipment(
+			shipment=shipment,
+			delivery_address=delivery_address,
+			shipment_parcel=shipment_parcel,
+			description_of_content=description_of_content,
+			value_of_goods=value_of_goods,
+			delivery_contact=delivery_contact,
+			service_info=service_info,
+		)
+
 	if shipment_info:
 		frappe.db.set_value('Shipment', shipment, 'service_provider', shipment_info.get('service_provider'))
 		frappe.db.set_value('Shipment', shipment, 'carrier', shipment_info.get('carrier'))
@@ -156,6 +176,8 @@ def print_shipping_label(service_provider, shipment_id):
 		shipping_label = get_letmeship_label(shipment_id)
 	elif service_provider == PACKLINK_PROVIDER:
 		shipping_label = get_packlink_label(shipment_id)
+	elif service_provider == SENDCLOUD_PROVIDER:
+		shipping_label = get_sendcloud_label(shipment_id)
 	return shipping_label
 
 
@@ -169,6 +191,8 @@ def update_tracking(shipment, service_provider, shipment_id, delivery_notes=[]):
 		tracking_data = get_letmeship_tracking_data(shipment_id)
 	elif service_provider == PACKLINK_PROVIDER:
 		tracking_data = get_packlink_tracking_data(shipment_id)
+	elif service_provider == SENDCLOUD_PROVIDER:
+		tracking_data = get_sendcloud_tracking_data(shipment_id)
 	if tracking_data:
 		if delivery_notes:
 			update_delivery_note(delivery_notes=delivery_notes, tracking_info=tracking_data)
