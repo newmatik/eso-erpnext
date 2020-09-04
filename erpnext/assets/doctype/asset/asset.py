@@ -33,8 +33,8 @@ class Asset(AccountsController):
 		self.validate_in_use_date()
 		self.set_status()
 		self.make_asset_movement()
-		if not self.booked_fixed_asset and self.validate_make_gl_entry():
-			self.make_gl_entries()
+		#if not self.booked_fixed_asset and self.validate_make_gl_entry():
+		#	self.make_gl_entries()
 
 	def before_cancel(self):
 		self.cancel_auto_gen_movement()
