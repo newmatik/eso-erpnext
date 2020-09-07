@@ -31,6 +31,7 @@
    "options": "Operation"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "item_code",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -47,16 +48,19 @@
    "options": "Warehouse"
   },
   {
+   "allow_on_submit": 1,
    "default": "0",
    "fieldname": "set_alternative_items",
    "fieldtype": "Check",
-   "label": "Has Alternative Items ",
-   "read_only": 1
+   "ignore_user_permissions": 1,
+   "label": "Has Alternative Items "
   },
   {
+   "allow_on_submit": 1,
    "depends_on": "eval:doc.set_alternative_items",
    "fieldname": "switch_to_alt",
    "fieldtype": "Button",
+   "ignore_user_permissions": 1,
    "label": "Switch to Alternative Item"
   },
   {
@@ -64,12 +68,14 @@
    "fieldtype": "Column Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "item_name",
    "fieldtype": "Data",
    "label": "Item Name",
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "description",
    "fieldtype": "Text",
    "label": "Description",
@@ -120,6 +126,7 @@
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "available_qty_at_source_warehouse",
    "fieldtype": "Float",
    "label": "Available Qty at Source Warehouse",
@@ -140,7 +147,7 @@
   }
  ],
  "istable": 1,
- "modified": "2019-08-19 16:25:02.119660",
+ "modified": "2020-09-07 09:22:48.269262",
  "modified_by": "Administrator",
  "module": "Manufacturing",
  "name": "Work Order Item",
