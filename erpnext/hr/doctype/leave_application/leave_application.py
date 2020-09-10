@@ -40,8 +40,7 @@ class LeaveApplication(Document):
 	def on_update(self):
 		if self.status == "Open" and self.docstatus < 1:
 			# notify leave approver about creation
-			self.notify_leave_approver()
-		self.create_leave_ledger_entry()	
+			self.notify_leave_approver()	
 
 	def on_submit(self):
 		if self.status == "Open":
