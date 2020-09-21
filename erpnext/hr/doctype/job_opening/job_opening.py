@@ -57,7 +57,7 @@ def get_list_context(context):
 
 def get_job_openings(doctype, txt=None, filters=None, limit_start=0, limit_page_length=20, order_by=None):
 	fields = ['name', 'status', 'job_title', 'description', 'publish_salary_range',
-				'lower_range', 'upper_range', 'currency', 'applicant_route']
+				'lower_range', 'upper_range', 'currency', 'job_application_route']
 
 	filters = filters or {}
 	filters.update({
