@@ -547,17 +547,26 @@ erpnext.utils.update_child_items = function(opts) {
 	});
 
 	frm.doc[opts.child_docname].forEach(d => {
-		dialog.fields_dict.trans_items.df.data.push({
-			"docname": d.name,
-			"name": d.name,
-			"item_code": d.item_code,
-			"reqd_by_date": d.reqd_by_date,
-			"delivery_date": d.delivery_date,
-			"schedule_date": d.schedule_date,
-			"conversion_factor": d.conversion_factor,
-			"qty": d.qty,
-			"rate": d.rate,
-		});
+		if (frm.doc.doctype == 'Sales Order' || frm.doc.doctype == 'Purchase Order' ) {
+			dialog.fields_dict.trans_items.df.data.push({
+				"docname": d.name,
+				"name": d.name,
+				"item_code": d.item_code,
+				"delivery_date": d.delivery_date,
+				"schedule_date": d.schedule_date,
+				"conversion_factor": d.conversion_factor,
+				"qty": d.qty,
+				"rate": d.rate,
+			});
+		} else {
+			dialog.fields_dict.trans_items.df.data.push({
+				"docname": d.name,
+				"name": d.name,
+				"item_code": d.item_code,
+				"qty": d.qty,
+				"rate": d.rate,
+			});
+		}
 		this.data = dialog.fields_dict.trans_items.df.data;
 		dialog.fields_dict.trans_items.grid.refresh();
 	})
