@@ -131,9 +131,6 @@ def save_entries(gl_map, adv_adj, update_outstanding, from_repost=False):
 		if not from_repost:
 			validate_expense_against_budget(entry)
 
-	if not from_repost:
-		validate_account_for_perpetual_inventory(gl_map)
-
 
 def make_entry(args, adv_adj, update_outstanding, from_repost=False):
 	gle = frappe.new_doc("GL Entry")
