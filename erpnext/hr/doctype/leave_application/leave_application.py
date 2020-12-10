@@ -54,9 +54,6 @@ class LeaveApplication(Document):
 		self.create_leave_ledger_entry()
 		self.reload()
 
-	def on_update(self):
-		self.create_leave_ledger_entry()
-
 	def on_cancel(self):
 		self.create_leave_ledger_entry(submit=False)
 		self.db_set("status", "Cancelled")
