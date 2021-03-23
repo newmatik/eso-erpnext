@@ -198,7 +198,7 @@ class WorkOrder(Document):
 		self.validate_qty()
 		self.validate_transfer_against()
 		self.validate_operation_time()
-		self.status = self.get_status()
+		#self.status = self.get_status()
 		self.validate_workstation_type()
 		self.reset_use_multi_level_bom()
 		self.set_reserve_stock()
