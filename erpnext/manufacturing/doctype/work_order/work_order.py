@@ -49,7 +49,7 @@ class WorkOrder(Document):
 		self.calculate_operating_cost()
 		self.validate_qty()
 		self.validate_operation_time()
-		self.status = self.get_status()
+		#self.status = self.get_status()
 
 		validate_uom_is_integer(self, "stock_uom", ["qty", "produced_qty"])
 
