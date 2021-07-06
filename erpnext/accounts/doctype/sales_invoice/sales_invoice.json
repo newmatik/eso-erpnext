@@ -771,6 +771,7 @@
       "collapsible": 1,
       "fieldname": "sec_tax_breakup",
       "fieldtype": "Section Break",
+      "hidden": 1,
       "label": "Tax Breakup"
     },
     {
@@ -812,6 +813,7 @@
       "collapsible": 1,
       "fieldname": "loyalty_points_redemption",
       "fieldtype": "Section Break",
+      "hidden": 1,
       "label": "Loyalty Points Redemption"
     },
     {
@@ -875,6 +877,7 @@
       "collapsible_depends_on": "discount_amount",
       "fieldname": "section_break_49",
       "fieldtype": "Section Break",
+      "hidden": 1,
       "label": "Additional Discount"
     },
     {
@@ -931,6 +934,7 @@
     {
       "fieldname": "base_rounding_adjustment",
       "fieldtype": "Currency",
+      "hidden": 1,
       "label": "Rounding Adjustment (Company Currency)",
       "no_copy": 1,
       "options": "Company:company:default_currency",
@@ -940,6 +944,7 @@
     {
       "fieldname": "base_rounded_total",
       "fieldtype": "Currency",
+      "hidden": 1,
       "label": "Rounded Total (Company Currency)",
       "oldfieldname": "rounded_total",
       "oldfieldtype": "Currency",
@@ -949,6 +954,7 @@
     },
     {
       "description": "In Words will be visible once you save the Sales Invoice.",
+      "hidden": 1,
       "fieldname": "base_in_words",
       "fieldtype": "Data",
       "label": "In Words (Company Currency)",
@@ -979,6 +985,7 @@
     {
       "fieldname": "rounding_adjustment",
       "fieldtype": "Currency",
+      "hidden": 1,
       "label": "Rounding Adjustment",
       "no_copy": 1,
       "options": "currency",
@@ -989,6 +996,7 @@
       "bold": 1,
       "fieldname": "rounded_total",
       "fieldtype": "Currency",
+      "hidden": 1,
       "label": "Rounded Total",
       "oldfieldname": "rounded_total_export",
       "oldfieldtype": "Currency",
@@ -998,6 +1006,7 @@
     {
       "fieldname": "in_words",
       "fieldtype": "Data",
+      "hidden": 1,
       "label": "In Words",
       "oldfieldname": "in_words_export",
       "oldfieldtype": "Data",
@@ -1180,6 +1189,7 @@
       "depends_on": "grand_total",
       "fieldname": "column_break4",
       "fieldtype": "Section Break",
+      "hidden": 1,
       "label": "Write Off",
       "width": "50%"
     },
@@ -1254,6 +1264,7 @@
       "collapsible": 1,
       "fieldname": "edit_printing_settings",
       "fieldtype": "Section Break",
+      "hidden": 1,
       "label": "Printing Settings"
     },
     {
@@ -1302,6 +1313,7 @@
       "depends_on": "customer",
       "fieldname": "more_information",
       "fieldtype": "Section Break",
+      "hidden": 1,
       "label": "More Information"
     },
     {
@@ -1365,6 +1377,7 @@
       "collapsible": 1,
       "fieldname": "more_info",
       "fieldtype": "Section Break",
+      "hidden": 1,
       "label": "Accounting Details",
       "oldfieldtype": "Section Break",
       "options": "fa fa-file-text",
@@ -1438,6 +1451,7 @@
       "collapsible_depends_on": "sales_partner",
       "fieldname": "sales_team_section_break",
       "fieldtype": "Section Break",
+      "hidden": 1,
       "label": "Commission",
       "oldfieldtype": "Section Break",
       "options": "fa fa-group",
@@ -1481,6 +1495,7 @@
       "collapsible_depends_on": "sales_team",
       "fieldname": "section_break2",
       "fieldtype": "Section Break",
+      "hidden": 1,
       "label": "Sales Team",
       "print_hide": 1
     },
@@ -1497,6 +1512,7 @@
     {
       "fieldname": "subscription_section",
       "fieldtype": "Section Break",
+      "hidden": 1,
       "label": "Subscription Section"
     },
     {
