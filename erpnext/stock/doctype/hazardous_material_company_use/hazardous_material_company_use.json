@@ -1,0 +1,59 @@
+{
+ "creation": "2021-07-06 15:39:55.518615",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "introduction_date",
+  "decommissioning_date",
+  "lifecycle"
+ ],
+ "fields": [
+  {
+   "columns": 4,
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "introduction_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Introduction Date",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "decommissioning_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Decommissioning Date"
+  },
+  {
+   "columns": 2,
+   "fieldname": "lifecycle",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Lifecycle",
+   "options": "Evaluation\nActive use\nPhase-out\nDecommissioned",
+   "reqd": 1,
+   "translatable": 1
+  }
+ ],
+ "istable": 1,
+ "modified": "2021-07-06 19:36:14.256732",
+ "modified_by": "Administrator",
+ "module": "Stock",
+ "name": "Hazardous Material Company Use",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
