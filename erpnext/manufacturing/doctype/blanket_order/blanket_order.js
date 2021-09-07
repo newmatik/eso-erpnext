@@ -40,7 +40,7 @@ frappe.ui.form.on("Blanket Order", {
     if (frm.doc.customer && frm.doc.docstatus === 1) {
       frm.add_custom_button(__("View Orders"), function() {
         frappe.set_route("List", "Sales Order", {
-          blanket_order: frm.doc.name
+          "Sales Order Item.blanket_order": frm.doc.name
         });
       });
       frm
@@ -65,26 +65,6 @@ frappe.ui.form.on("Blanket Order", {
           frappe.model.open_mapped_doc({
             method:
               "erpnext.manufacturing.doctype.blanket_order.blanket_order.make_purchase_order",
-            frm: frm
-          });
-        })
-        .addClass("btn-primary");
-    }
-  },
-
-  refresh: function(frm) {
-    erpnext.hide_company();
-    if (frm.doc.customer && frm.doc.docstatus === 1) {
-      frm.add_custom_button(__("View Orders"), function() {
-        frappe.set_route("List", "Sales Order", {
-          blanket_order: frm.doc.name
-        });
-      });
-      frm
-        .add_custom_button(__("Create Sales Order"), function() {
-          frappe.model.open_mapped_doc({
-            method:
-              "erpnext.manufacturing.doctype.blanket_order.blanket_order.make_sales_order",
             frm: frm
           });
         })
