@@ -27,7 +27,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Control",
-   "options": "Elminiation\nSubstitution\nEngineering Controls\nWork Practices\nPPE\nNone",
+   "options": "Elimination\nSubstitution\nEngineering Controls\nWork Practices\nPPE\nNone",
    "translatable": 1
   },
   {
@@ -42,7 +42,7 @@
    "label": "Processing Information"
   }
  ],
- "modified": "2021-07-06 19:36:15.746099",
+ "modified": "2021-09-23 10:05:35.081450",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Control Band",
