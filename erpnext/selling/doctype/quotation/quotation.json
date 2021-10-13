@@ -875,7 +875,7 @@
       "no_copy": 1,
       "oldfieldname": "status",
       "oldfieldtype": "Select",
-      "options": "Draft\nOpen\nReplied\nOrdered\nLost\nCancelled",
+      "options": "Draft\nOpen\nReplied\nOrdered\nExpired\nLost\nCancelled",
       "print_hide": 1,
       "read_only": 1,
       "reqd": 1
