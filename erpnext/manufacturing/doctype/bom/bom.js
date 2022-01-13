@@ -572,35 +572,6 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 		fields: [
 			{
 				fieldtype:'Link',
-				fieldname:"add_alt_item",
-				options: 'Item',
-				depends_on: 'eval:'+ has_alternatives,
-				label: __('Add pre-defined Alternative Item'),
-				onchange: function() {
-					var item_code = this.get_value();
-  				  	if (item_code) {
-								d.set_value("add_alt_item", null);
-								cur_frm.alt_list_data.push({
-										"alt_item": item_code,
-										"qty": init_qty
-									});
-								cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data)
-								cur_frm.set_alt_items()
-					}
-				},
-				get_query: () => {
-					var allready_selected = Object.keys(cur_frm.alt_list_data).map(key => cur_frm.alt_list_data[key].alt_item)
-					return {
-						query: "erpnext.stock.doctype.item_alternative.item_alternative.get_bom_alternative_items",
-						filters: {
-							item_code: parent_item_code,
-							exclude: allready_selected
-						}
-					};
-				}
-			},
-			{
-				fieldtype:'Link',
 				fieldname:"add_regular_item",
 				options: 'Item',
 				label: __('Add Item'),
