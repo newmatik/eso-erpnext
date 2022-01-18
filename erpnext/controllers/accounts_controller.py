@@ -3840,6 +3840,9 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 				title=_("Insufficient Permissions"),
 			)
 
+			frappe.throw(_("You do not have permissions to {} items in a {}.")
+				.format(actions[perm_type], parent_doctype), title=_("Insufficient Permissions"))
+
 	def validate_workflow_conditions(doc):
 		workflow = get_workflow_name(doc.doctype)
 		if not workflow:
@@ -3969,18 +3972,8 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 
 	parent = frappe.get_doc(parent_doctype, parent_doctype_name)
 
-	check_doc_permissions(parent, "write")
-
-	if parent_doctype == "Quotation":
-		ordered_items = get_ordered_items(parent.name)
-		_removed_items = validate_and_delete_children(parent, data, ordered_items)
-	elif parent_doctype == "Supplier Quotation":
-		purchased_items = get_purchased_items(parent.name)
-		_removed_items = validate_and_delete_children(parent, data, purchased_items)
-	else:
-		_removed_items = validate_and_delete_children(parent, data)
-
-	items_added_or_removed |= _removed_items
+	check_doc_permissions(parent, 'cancel')
+	validate_and_delete_children(parent, data)
 
 	for d in data:
 		new_child_flag = False
@@ -4058,27 +4051,28 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 		conv_fac_precision = child_item.precision("conversion_factor") or 2
 		qty_precision = child_item.precision("qty") or 2
 
-		prev_rate, new_rate = flt(child_item.get("rate")), flt(d.get("rate"))
-		rate_unchanged = prev_rate == new_rate
-		if not rate_unchanged and not child_item.get("qty") and is_allowed_zero_qty():
-			frappe.throw(_("Rate of '{}' items cannot be changed").format(frappe.bold(_("Unit Price"))))
-		# Amount cannot be lesser than billed amount, except for negative amounts
-		row_rate = flt(d.get("rate"), rate_precision)
-
-		if parent_doctype in ["Purchase Order", "Sales Order"]:
-			amount_below_billed_amt = flt(child_item.billed_amt, rate_precision) > flt(
-				row_rate * flt(d.get("qty"), qty_precision), rate_precision
-			)
-			if amount_below_billed_amt and row_rate > 0.0:
-				frappe.throw(
-					_(
-						"Row #{0}: Cannot set Rate if the billed amount is greater than the amount for Item {1}."
-					).format(child_item.idx, child_item.item_code)
-				)
+		# ESO CHANGE, set Item if different
+		user = frappe.session.user
+		if child_item.item_code != d.get("item_code"):
+			if ("Sales Manager" in frappe.get_roles(user)):
+				if (child_item.billed_amt > 0 or child_item.delivered_qty > 0):
+					frappe.throw(_("Cannot update item since partial bill or partial delivery exists."))
+				else:
+					item_data = frappe.get_doc("Item", d.get("item_code"))
+					child_item.item_code = d.get("item_code")
+					child_item.item_name = item_data.item_name
+					child_item.description = item_data.description
+					child_item.stock_uom = item_data.stock_uom
+					child_item.uom = item_data.stock_uom
 			else:
-				child_item.rate = row_rate
-		else:
-			child_item.rate = row_rate
+				frappe.throw(_("User must be Sales Manager to update Item Code."))
+
+		# ESO Change to accept overbilling
+		# if flt(child_item.billed_amt) > (flt(d.get("rate")) * flt(d.get("qty"))):
+		# 	frappe.throw(_("Row #{0}: Cannot set Rate if amount is greater than billed amount for Item {1}.")
+		# 				 .format(child_item.idx, child_item.item_code))
+		# else:
+		child_item.rate = flt(d.get("rate"))
 
 		if d.get("conversion_factor"):
 			if child_item.stock_uom == child_item.uom:
