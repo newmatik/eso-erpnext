@@ -2900,34 +2900,31 @@ class StockEntry(StockController, SubcontractingInwardController):
 		return used_scrap_items
 
 	def get_unconsumed_raw_materials(self):
+		import math
 		wo = frappe.get_doc("Work Order", self.work_order)
-		wo_items = frappe.get_all(
-			"Work Order Item",
-			filters={"parent": self.work_order},
-			fields=["item_code", "source_warehouse", "required_qty", "consumed_qty", "transferred_qty"],
-		)
-
-		work_order_qty = wo.material_transferred_for_manufacturing or wo.qty
+		wo_items = frappe.get_all('Work Order Item',
+			filters={'parent': self.work_order},
+			fields=["item_code", "required_qty", "consumed_qty"]
+			)
+		work_order_qty = wo.qty
 		for item in wo_items:
 			item_account_details = get_item_defaults(item.item_code, self.company)
 			# Take into account consumption if there are any.
+			if self.purpose == 'Manufacture':
+				wo_item_qty = item.transferred_qty or item.required_qty
+				req_qty_each = (
+					((wo_item_qty) - (item.consumed_qty)) /
+                              						((work_order_qty) - (wo.produced_qty))
+				)
 
-			wo_item_qty = item.transferred_qty or item.required_qty
+				qty = req_qty_each * flt(self.fg_completed_qty)
 
-			wo_qty_unconsumed = flt(wo_item_qty) - flt(item.consumed_qty)
-			wo_qty_to_produce = flt(work_order_qty) - flt(wo.produced_qty)
-			bom_qty_per_unit = item.required_qty / wo.qty  # per-unit BOM qty
+				qty = math.ceil(qty)
 
-			req_qty_each = (wo_qty_unconsumed) / (wo_qty_to_produce or 1)
-			req_qty_each = min(req_qty_each, bom_qty_per_unit)
-
-			qty = req_qty_each * flt(self.fg_completed_qty)
-
-			if qty > 0:
-				self.add_to_stock_entry_detail(
-					{
+				if qty > 0:
+					self.add_to_stock_entry_detail({
 						item.item_code: {
-							"from_warehouse": wo.wip_warehouse or item.source_warehouse,
+							"from_warehouse": wo.wip_warehouse,
 							"to_warehouse": "",
 							"qty": qty,
 							"item_name": item.item_name,
@@ -2936,8 +2933,7 @@ class StockEntry(StockController, SubcontractingInwardController):
 							"expense_account": item_account_details.get("expense_account"),
 							"cost_center": item_account_details.get("buying_cost_center"),
 						}
-					}
-				)
+					})
 
 	def add_transfered_raw_materials_in_items(self) -> None:
 		available_materials = get_available_materials(self.work_order)
