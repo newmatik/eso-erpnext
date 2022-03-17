@@ -199,7 +199,9 @@ def split_batch(batch_no, item_code, warehouse, qty, company, new_batch_id=None)
 			batch_no=batch_no,
 			warehouse=warehouse
 		), ['company'])
-
+	cost_center = 'Haupt - ESODE'
+	if company == 'SC ESO Electronic S.R.L':
+		cost_center = 'Haupt - ESORO'
 	stock_entry = frappe.get_doc(dict(
 		doctype='Stock Entry',
 		purpose='Repack',
@@ -209,13 +211,15 @@ def split_batch(batch_no, item_code, warehouse, qty, company, new_batch_id=None)
 				item_code=item_code,
 				qty=float(qty or 0),
 				s_warehouse=warehouse,
-				batch_no=batch_no
+				batch_no=batch_no,
+				cost_center=cost_center
 			),
 			dict(
 				item_code=item_code,
 				qty=float(qty or 0),
 				t_warehouse=warehouse,
-				batch_no=batch.name
+				batch_no=batch.name,
+				cost_center=cost_center
 			),
 		]
 	))
