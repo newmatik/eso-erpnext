@@ -563,8 +563,6 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 	cur_frm.set_alt_items = function(){
 		var selected_items = []
 		cur_frm.alt_list_data.forEach(function(item) {
-		console.log(item.alt_item)
-		// if(item.alt_item != parent_item_code)
 		  selected_items.push(
 			  '<a targer="_blank" href="#Form/Item/' + item.alt_item +'">' + item.alt_item + '</a> ' + `(${item.qty})`
 		  )
