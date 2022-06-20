@@ -2162,6 +2162,7 @@ class StockEntry(StockController):
 			if self.purpose == 'Manufacture':
 				req_qty_each = flt(item.required_qty / wo.qty)
 				if (flt(item.consumed_qty) != 0):
+
 					remaining_qty = flt(item.consumed_qty) - (flt(wo.produced_qty) * req_qty_each)
 					exhaust_qty = req_qty_each * wo.produced_qty
 					if remaining_qty > exhaust_qty:
@@ -2169,6 +2170,9 @@ class StockEntry(StockController):
 							qty = 0
 						else:
 							qty = (req_qty_each * flt(self.fg_completed_qty)) - remaining_qty
+					else:
+						qty = (req_qty_each * flt(self.fg_completed_qty)) - remaining_qty
+
 				else:
 					qty = req_qty_each * flt(self.fg_completed_qty)
 
