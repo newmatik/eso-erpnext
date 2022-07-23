@@ -11,6 +11,11 @@
   "column_break_3",
   "item_name",
   "description",
+  "qty_section",
+  "required_qty",
+  "rate",
+  "amount",
+  "transferred_qty",
   "allow_alternative_item",
   "include_item_in_manufacturing",
   "qty_section",
@@ -120,6 +125,18 @@
    "label": "Available Qty at WIP Warehouse",
    "read_only": 1
   },
+  {
+    "fieldname": "rate",
+    "fieldtype": "Currency",
+    "label": "Rate",
+    "read_only": 1
+   },
+   {
+    "fieldname": "amount",
+    "fieldtype": "Currency",
+    "label": "Amount",
+    "read_only": 1
+   },
   {
    "fieldname": "rate",
    "fieldtype": "Currency",
