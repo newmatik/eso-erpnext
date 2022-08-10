@@ -311,7 +311,7 @@ def repost(doc):
 		)
 
 		if outgoing_email_account and not isinstance(e, RecoverableErrors):
-			notify_error_to_stock_managers(doc, message)
+			#notify_error_to_stock_managers(doc, message)
 			doc.set_status("Failed")
 	finally:
 		if not frappe.flags.in_test:
