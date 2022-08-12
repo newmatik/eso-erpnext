@@ -718,6 +718,7 @@ erpnext.utils.update_child_items = function (opts) {
 			precision: get_precision("conversion_factor"),
 		});
 	}
+
 	if (frm.doc.doctype == 'Sales Order') {
 		fields.splice(2, 0, {
 			fieldtype: 'Date',
@@ -774,7 +775,7 @@ erpnext.utils.update_child_items = function (opts) {
 				fieldtype: "Table",
 				label: "Items",
 				cannot_add_rows: cannot_add_row,
-				in_place_edit: false,
+				in_place_edit: true,
 				reqd: 1,
 				data: this.data,
 				get_data: () => {
@@ -798,6 +799,7 @@ erpnext.utils.update_child_items = function (opts) {
 		},
 		update_items: function () {
 			const trans_items = this.get_values()["trans_items"].filter((item) => !!item.item_code);
+			console.log(trans_items)
 			frappe.call({
 				method: "erpnext.controllers.accounts_controller.update_child_qty_rate",
 				freeze: true,
@@ -818,24 +820,30 @@ erpnext.utils.update_child_items = function (opts) {
 	});
 
 	frm.doc[opts.child_docname].forEach(d => {
-		dialog.fields_dict.trans_items.df.data.push({
-			"docname": d.name,
-			"name": d.name,
-			"item_code": d.item_code,
-			"reqd_by_date": d.reqd_by_date,
-			"delivery_date": d.delivery_date,
-			"schedule_date": d.schedule_date,
-			"conversion_factor": d.conversion_factor,
-			"qty": d.qty,
-			"rate": d.rate,
-			"uom": d.uom
-		});
+		if (frm.doc.doctype == 'Sales Order' || frm.doc.doctype == 'Purchase Order' ) {
+			dialog.fields_dict.trans_items.df.data.push({
+				"docname": d.name,
+				"name": d.name,
+				"item_code": d.item_code,
+				"reqd_by_date": d.reqd_by_date,
+				"delivery_date": d.delivery_date,
+				"schedule_date": d.schedule_date,
+				"conversion_factor": d.conversion_factor,
+				"qty": d.qty,
+				"rate": d.rate,
+			});
+		} else {
+			dialog.fields_dict.trans_items.df.data.push({
+				"docname": d.name,
+				"name": d.name,
+				"item_code": d.item_code,
+				"qty": d.qty,
+				"rate": d.rate,
+			});
+		}
 		this.data = dialog.fields_dict.trans_items.df.data;
 		dialog.fields_dict.trans_items.grid.refresh();
 	})
-	dialog.show();
-}
-
 	dialog.show();
 };
 
