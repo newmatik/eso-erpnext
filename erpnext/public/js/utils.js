@@ -784,22 +784,8 @@ erpnext.utils.update_child_items = function (opts) {
 				fields: fields,
 			},
 		],
-		primary_action: function () {
-			if (frm.doctype == "Sales Order" && has_reserved_stock) {
-				this.hide();
-				frappe.confirm(
-					__(
-						"The reserved stock will be released when you update items. Are you certain you wish to proceed?"
-					),
-					() => this.update_items()
-				);
-			} else {
-				this.update_items();
-			}
-		},
-		update_items: function () {
-			const trans_items = this.get_values()["trans_items"].filter((item) => !!item.item_code);
-			console.log(trans_items)
+		primary_action: function() {
+			const trans_items = this.get_values()["trans_items"];
 			frappe.call({
 				method: "erpnext.controllers.accounts_controller.update_child_qty_rate",
 				freeze: true,
