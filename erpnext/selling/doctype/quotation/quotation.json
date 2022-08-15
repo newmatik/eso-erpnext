@@ -139,6 +139,7 @@
    "fieldname": "customer_section",
    "fieldtype": "Section Break",
    "options": "fa fa-user"
+   "options": "fa fa-user"
   },
   {
    "allow_on_submit": 1,
@@ -257,6 +258,14 @@
    "options": "\nSales\nMaintenance\nShopping Cart",
    "print_hide": 1,
    "reqd": 1
+  },
+  {
+   "collapsible": 1,
+   "depends_on": "party_name",
+   "fieldname": "contact_section",
+   "fieldtype": "Section Break",
+   "label": "Address and Contact",
+   "options": "fa fa-bullhorn"
   },
   {
    "fieldname": "customer_address",
@@ -749,6 +758,7 @@
    "label": "Payment Terms"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "payment_terms_template",
    "fieldtype": "Link",
    "label": "Payment Terms Template",
@@ -756,6 +766,7 @@
    "print_hide": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "payment_schedule",
    "fieldtype": "Table",
    "label": "Payment Schedule",
@@ -838,7 +849,7 @@
   {
    "fieldname": "subscription_section",
    "fieldtype": "Section Break",
-   "label": "Auto Repeat"
+   "label": "Auto Repeat Section"
   },
   {
    "fieldname": "auto_repeat",
