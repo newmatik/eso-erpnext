@@ -102,6 +102,7 @@
    "label": "Description"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "description",
    "fieldtype": "Text Editor",
    "label": "Description",
@@ -459,6 +460,7 @@
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Job Card Item",
+   "label": "Job Card Item",
    "no_copy": 1,
    "print_hide": 1
   },
@@ -495,7 +497,6 @@
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Material Request Item",
- "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [],
  "sort_field": "modified",
