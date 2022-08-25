@@ -103,6 +103,7 @@
    "label": "Required By"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "company",
    "fieldtype": "Link",
    "in_standard_filter": 1,
