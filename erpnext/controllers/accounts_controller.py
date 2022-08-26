@@ -3614,7 +3614,7 @@ def set_order_defaults(parent_doctype, parent_doctype_name, child_doctype, child
 	child_item.warehouse = get_item_warehouse(item, p_doc, overwrite_warehouse=True)
 	conversion_factor = flt(get_conversion_factor(item.item_code, child_item.uom).get("conversion_factor"))
 	child_item.conversion_factor = flt(trans_item.get("conversion_factor")) or conversion_factor
-	
+
 	if parent_doctype == 'Sales Order':
 		child_item.reqd_by_date = trans_item.get('reqd_by_date') or p_doc.reqd_by_date
 
@@ -3631,8 +3631,9 @@ def set_order_defaults(parent_doctype, parent_doctype_name, child_doctype, child
 				).format(frappe.bold(item.item_code))
 			)
 
-	set_child_tax_template_and_map(item, child_item, p_doc)
-	add_taxes_from_tax_template(child_item, p_doc)
+	if parent_doctype != "Blanket Order":
+		set_child_tax_template_and_map(item, child_item, p_doc)
+		add_taxes_from_tax_template(child_item, p_doc)
 	return child_item
 
 
@@ -3713,7 +3714,8 @@ def validate_and_delete_children(parent, data) -> bool:
 
 	# need to update ordered qty in Material Request first
 	# bin uses Material Request Items to recalculate & update
-	parent.update_prevdoc_status()
+	if str(parent).find('BlanketOrder') == -1:
+		parent.update_prevdoc_status()
 
 	for d in deleted_children:
 		update_bin_on_delete(d, parent.doctype)
@@ -3764,7 +3766,7 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 			)
 
 	def get_new_child_item(item_row):
-		child_doctype = "Sales Order Item" if parent_doctype == "Sales Order" else "Purchase Order Item"
+		child_doctype = "Sales Order Item" if parent_doctype == "Sales Order" else "Purchase Order Item" if parent_doctype == "Purchase Order" else "Blanket Order Item"
 		return set_order_defaults(parent_doctype, parent_doctype_name, child_doctype, child_docname, item_row)
 
 	def is_allowed_zero_qty():
@@ -3849,6 +3851,7 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 
 	for d in data:
 		new_child_flag = False
+		prev_date = None
 
 		if not d.get("item_code"):
 			# ignore empty rows
@@ -3913,7 +3916,8 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 
 		child_item.qty = flt(d.get("qty"))
 		rate_precision = child_item.precision("rate") or 2
-		conv_fac_precision = child_item.precision("conversion_factor") or 2
+		if str(parent).find('BlanketOrder') == -1:
+			conv_fac_precision = child_item.precision("conversion_factor") or 2
 		qty_precision = child_item.precision("qty") or 2
 
 		# ESO CHANGE, set Item if different
@@ -3994,24 +3998,25 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 
 	parent.reload()
 	parent.flags.ignore_validate_update_after_submit = True
-	parent.set_qty_as_per_stock_uom()
-	parent.calculate_taxes_and_totals()
-	parent.set_total_in_words()
-	if parent_doctype == "Sales Order":
-		make_packing_list(parent)
-		parent.set_gross_profit()
-	frappe.get_doc("Authorization Control").validate_approving_authority(
-		parent.doctype, parent.company, parent.base_grand_total
-	)
+	if parent_doctype != "Blanket Order":
+		parent.set_qty_as_per_stock_uom()
+		parent.calculate_taxes_and_totals()
+		parent.set_total_in_words()
+		if parent_doctype == "Sales Order":
+			make_packing_list(parent)
+			parent.set_gross_profit()
+		frappe.get_doc("Authorization Control").validate_approving_authority(
+			parent.doctype, parent.company, parent.base_grand_total
+		)
 
-	parent.set_payment_schedule()
-	if parent_doctype == "Purchase Order":
-		parent.validate_minimum_order_qty()
-		parent.validate_budget()
-		if parent.is_against_so():
-			parent.update_status_updater()
-	else:
-		parent.check_credit_limit()
+		parent.set_payment_schedule()
+		if parent_doctype == "Purchase Order":
+			parent.validate_minimum_order_qty()
+			parent.validate_budget()
+			if parent.is_against_so():
+				parent.update_status_updater()
+		else:
+			parent.check_credit_limit()
 
 	# reset index of child table
 	for idx, row in enumerate(parent.get(child_docname), start=1):
@@ -4043,7 +4048,7 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 							"Items cannot be updated as Subcontracting Order is created against the Purchase Order {0}."
 						).format(frappe.bold(parent.name))
 					)
-	else:  # Sales Order
+	elif parent_doctype == "Sales Order":
 		parent.validate_selling_price()
 		parent.validate_for_duplicate_items()
 		parent.validate_warehouse()
@@ -4055,9 +4060,10 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 	parent.reload()
 	validate_workflow_conditions(parent)
 
-	parent.update_blanket_order()
-	parent.update_billing_percentage()
-	parent.set_status()
+	if parent_doctype != "Blanket Order":
+		parent.update_blanket_order()
+		parent.update_billing_percentage()
+		parent.set_status()
 
 	parent.validate_uom_is_integer("uom", "qty")
 	parent.validate_uom_is_integer("stock_uom", "stock_qty")
