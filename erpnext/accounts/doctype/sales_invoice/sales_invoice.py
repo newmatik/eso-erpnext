@@ -282,7 +282,7 @@ class SalesInvoice(SellingController):
 		self.validate_fixed_asset()
 		self.set_income_account_for_fixed_assets()
 		self.validate_item_cost_centers()
-		self.check_conversion_rate()
+		#self.check_conversion_rate()
 		self.validate_accounts()
 
 		validate_inter_company_party(
