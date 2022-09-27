@@ -131,7 +131,8 @@
    "fieldname": "supplier_part_no",
    "fieldtype": "Data",
    "label": "Supplier Part Number",
-   "print_hide": 1
+   "print_hide": 1,
+   "reqd": 1
   },
   {
    "fieldname": "item_name",
