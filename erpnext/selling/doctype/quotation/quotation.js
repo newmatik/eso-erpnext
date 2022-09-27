@@ -192,7 +192,7 @@ erpnext.selling.QuotationController = class QuotationController extends erpnext.
 		// to overwrite the customer_filter trigger from queries.js
 		this.frm.toggle_reqd("party_name", this.frm.doc.quotation_to);
 		this.frm.set_query("customer_address", this.address_query);
-		this.frm.set_query("shipping_address_name", this.address_query);
+		// this.frm.set_query("shipping_address_name", this.address_query);
 	}
 
 	tc_name() {
