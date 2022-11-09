@@ -10,9 +10,13 @@
  "custom": 0,
  "docstatus": 0,
  "doctype": "DocType",
- "document_type": "",
  "editable_grid": 1,
  "engine": "InnoDB",
+ "field_order": [
+  "skill",
+  "proficiency",
+  "evaluation_date"
+ ],
  "fields": [
   {
    "allow_bulk_edit": 0,
