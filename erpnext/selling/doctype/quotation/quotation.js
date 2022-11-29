@@ -123,6 +123,9 @@ erpnext.selling.QuotationController = class QuotationController extends erpnext.
 					frappe.datetime.get_diff(doc.valid_till, frappe.datetime.get_today()) >= 0)
 			) {
 				this.frm.add_custom_button(__("Sales Order"), () => this.make_sales_order(), __("Create"));
+				
+				cur_frm.add_custom_button(__('Blanket Order'),
+					cur_frm.cscript['Make Blanket Order'], __('Create'));
 			}
 
 			if (doc.status !== "Ordered" && this.frm.has_perm("write")) {
