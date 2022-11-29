@@ -108,6 +108,9 @@ erpnext.selling.QuotationController = class QuotationController extends erpnext.
 			if(!doc.valid_till || frappe.datetime.get_diff(doc.valid_till, frappe.datetime.get_today()) >= 0) {
 				cur_frm.add_custom_button(__('Sales Order'),
 					cur_frm.cscript['Make Sales Order'], __('Create'));
+
+				cur_frm.add_custom_button(__('Blanket Order'),
+					cur_frm.cscript['Make Blanket Order'], __('Create'));
 			}
 
 			if (doc.status !== "Ordered") {
@@ -362,9 +365,16 @@ frappe.ui.form.on(
 		// enable tax_amount field if Actual
 	}
 );
+cur_frm.cscript['Make Blanket Order'] = function() {
+	frappe.model.open_mapped_doc({
+		method: "erpnext.selling.doctype.quotation.quotation.make_blanket_order",
+		frm: cur_frm
+	})
+}
 
 frappe.ui.form.on("Quotation Item", "stock_balance", function (frm, cdt, cdn) {
 	var d = frappe.model.get_doc(cdt, cdn);
 	frappe.route_options = { item_code: d.item_code };
 	frappe.set_route("query-report", "Stock Balance");
 });
+
