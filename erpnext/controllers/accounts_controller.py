@@ -271,7 +271,7 @@ class AccountsController(TransactionBase):
 
 		self.validate_party()
 		self.validate_currency()
-		self.validate_party_account_currency()
+		#self.validate_party_account_currency()
 		self.validate_return_against_account()
 
 		if self.doctype in ["Purchase Invoice", "Sales Invoice"]:
