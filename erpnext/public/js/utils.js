@@ -713,7 +713,7 @@ erpnext.utils.update_child_items = function (opts) {
 		fields.splice(3, 0, {
 			fieldtype: "Float",
 			fieldname: "conversion_factor",
-			in_list_view: 0,
+			in_list_view: 1,
 			label: __("Conversion Factor"),
 			precision: get_precision("conversion_factor"),
 		});
@@ -831,7 +831,7 @@ erpnext.utils.update_child_items = function (opts) {
 		dialog.fields_dict.trans_items.grid.refresh();
 	})
 	dialog.show();
-};
+}
 
 erpnext.utils.map_current_doc = function (opts) {
 	function _map() {

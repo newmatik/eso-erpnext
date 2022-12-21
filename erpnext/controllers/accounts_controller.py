@@ -211,8 +211,7 @@ class AccountsController(TransactionBase):
 
 		self.validate_party()
 		self.validate_currency()
-		self.validate_party_account_currency()
-		self.validate_return_against_account()
+		#self.validate_party_account_currency()
 
 		if self.doctype in ["Purchase Invoice", "Sales Invoice"]:
 			if invalid_advances := [x for x in self.advances if not x.reference_type or not x.reference_name]:
