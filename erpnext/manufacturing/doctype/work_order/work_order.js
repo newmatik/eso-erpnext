@@ -659,36 +659,23 @@ frappe.ui.form.on("Work Order Operation", {
 erpnext.work_order = {
 	set_custom_buttons: function (frm) {
 		var doc = frm.doc;
-
-		if (doc.docstatus === 1 && doc.status !== "Closed") {
-			frm.add_custom_button(
-				__("Close"),
-				function () {
-					frappe.confirm(__("Once the Work Order is Closed. It can't be resumed."), () => {
+		if (doc.docstatus === 1 && doc.status != "Closed") {
+			frm.add_custom_button(__('Close'), function() {
+				frappe.confirm(__("Once the Work Order is Closed. It can't be resumed."),
+					() => {
 						erpnext.work_order.change_work_order_status(frm, "Closed");
-					});
-				},
-				__("Status")
-			);
-		}
+					}
+				);
+			}, __("Status"));
 
-		if (doc.docstatus === 1 && !["Closed", "Completed"].includes(doc.status)) {
-			if (doc.status != "Stopped" && doc.status != "Completed") {
-				frm.add_custom_button(
-					__("Stop"),
-					function () {
-						erpnext.work_order.change_work_order_status(frm, "Stopped");
-					},
-					__("Status")
-				);
-			} else if (doc.status == "Stopped") {
-				frm.add_custom_button(
-					__("Re-open"),
-					function () {
-						erpnext.work_order.change_work_order_status(frm, "Resumed");
-					},
-					__("Status")
-				);
+			if (doc.status != 'Stopped' && doc.status != 'Completed') {
+				frm.add_custom_button(__('Stop'), function() {
+					erpnext.work_order.change_work_order_status(frm, "Stopped");
+				}, __("Status"));
+			} else if (doc.status == 'Stopped') {
+				frm.add_custom_button(__('Re-open'), function() {
+					erpnext.work_order.change_work_order_status(frm, "Resumed");
+				}, __("Status"));
 			}
 
 			const show_start_btn =
