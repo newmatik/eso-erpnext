@@ -764,6 +764,7 @@ erpnext.work_order = {
 					__("Status")
 				);
 			}
+		}
 
 			erpnext.work_order.setup_stock_reservation(frm);
 
