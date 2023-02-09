@@ -660,7 +660,7 @@ erpnext.work_order = {
 	set_custom_buttons: function (frm) {
 		var doc = frm.doc;
 		if (doc.docstatus === 1 && doc.status != "Closed") {
-			frm.add_custom_button(__('Close'), function() {
+            frm.add_custom_button(__('Close'), function() {
 				frappe.confirm(__("Once the Work Order is Closed. It can't be resumed."),
 					() => {
 						erpnext.work_order.change_work_order_status(frm, "Closed");
@@ -677,9 +677,8 @@ erpnext.work_order = {
 					erpnext.work_order.change_work_order_status(frm, "Resumed");
 				}, __("Status"));
 			}
-
-			const show_start_btn =
-				frm.doc.skip_transfer || frm.doc.transfer_material_against == "Job Card" ? 0 : 1;
+			const show_start_btn = (frm.doc.skip_transfer
+				|| frm.doc.transfer_material_against == 'Job Card') ? 0 : 1;
 
 			if (show_start_btn) {
 				let pending_to_transfer = frm.doc.required_items.some(
