@@ -3724,7 +3724,7 @@ def set_order_defaults(parent_doctype, parent_doctype_name, child_doctype, child
 		
 		# get customer reference code
 		customer_items_list = get_customer_item_list(item.name, p_doc.customer_name)
-		if customer_items_list[0]:
+		if customer_items_list:
 			child_item.customer_item_code = get_customer_item(customer_items_list[0])
 
 	if child_doctype in ["Purchase Order Item", "Supplier Quotation Item"]:
