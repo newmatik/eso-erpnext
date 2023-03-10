@@ -429,16 +429,19 @@ scheduler_events = {
 	"cron": {
 		"0/15 * * * *": [
 			"erpnext.manufacturing.doctype.bom_update_log.bom_update_log.resume_bom_cost_update_jobs",
-		],
-		"0/30 * * * *": [
-			"erpnext.stock.doctype.repost_item_valuation.repost_item_valuation.run_parallel_reposting",
-		],
+		]
+        # Commenting jobs belong since we are not using them in eso
+		# "0/30 * * * *": [
+		# 	"erpnext.utilities.doctype.video.video.update_youtube_data",
+		# ],
 		# Hourly but offset by 30 minutes
-		"30 * * * *": [
-			"erpnext.accounts.doctype.gl_entry.gl_entry.rename_gle_sle_docs",
-		],
+		# "30 * * * *": [
+		# 	"erpnext.accounts.doctype.gl_entry.gl_entry.rename_gle_sle_docs",
+		# ],
 		# Daily but offset by 45 minutes
-		"45 0 * * *": [],
+		# "45 0 * * *": [
+		# 	"erpnext.stock.reorder_item.reorder_item",
+		# ],
 	},
 	"hourly": [
 		"erpnext.projects.doctype.project.project.hourly_reminder",
