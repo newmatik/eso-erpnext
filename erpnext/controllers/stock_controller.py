@@ -21,7 +21,7 @@ from erpnext.controllers.sales_and_purchase_return import (
 	filter_serial_batches,
 	make_serial_batch_bundle_for_return,
 )
-from erpnext.stock import get_warehouse_account_map
+from erpnext.stock import get_warehouse_account_map, get_warehouse_account_v2
 from erpnext.stock.doctype.inventory_dimension.inventory_dimension import (
 	get_evaluated_inventory_dimension,
 )
@@ -141,12 +141,12 @@ class StockController(AccountsController):
 			or provisional_accounting_for_non_stock_items
 			or is_asset_pr
 		):
-			warehouse_account = get_warehouse_account_map(self.company)
+			# warehouse_account = get_warehouse_account_map(self.company)
 
 			if self.docstatus == 1:
 				if not gl_entries:
 					gl_entries = (
-						self.get_gl_entries(warehouse_account, via_landed_cost_voucher)
+						self.get_gl_entries({}, via_landed_cost_voucher)
 						if self.doctype == "Purchase Receipt"
 						else self.get_gl_entries(warehouse_account)
 					)
@@ -554,8 +554,8 @@ class StockController(AccountsController):
 				row.use_serial_batch_fields = 1
 
 	def get_gl_entries(self, warehouse_account=None, default_expense_account=None, default_cost_center=None):
-		if not warehouse_account:
-			warehouse_account = get_warehouse_account_map(self.company)
+		# if not warehouse_account:
+		# 	warehouse_account = get_warehouse_account_map(self.company)
 
 		sle_map = self.get_stock_ledger_details()
 		voucher_details = self.get_voucher_details(default_expense_account, default_cost_center, sle_map)
@@ -568,6 +568,9 @@ class StockController(AccountsController):
 			sle_rounding_diff = 0.0
 			if sle_list:
 				for sle in sle_list:
+
+					warehouse_account = get_warehouse_account_v2([sle.warehouse, item_row.get("target_warehouse"), item_row.get("warehouse")])
+					# print(warehouse_account)
 					if warehouse_account.get(sle.warehouse):
 						# from warehouse account
 
@@ -636,6 +639,7 @@ class StockController(AccountsController):
 						).format(frappe.bold(self.company))
 					)
 
+				
 				gl_list.append(
 					self.get_gl_dict(
 						{
