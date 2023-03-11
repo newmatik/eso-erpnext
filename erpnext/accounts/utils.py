@@ -1585,8 +1585,8 @@ def repost_gle_for_stock_vouchers(
 	if not stock_vouchers:
 		return
 
-	if not warehouse_account:
-		warehouse_account = get_warehouse_account_map(company)
+	# if not warehouse_account:
+	# 	warehouse_account = get_warehouse_account_map(company)
 
 	stock_vouchers = sort_stock_vouchers_by_posting_date(stock_vouchers, company=company)
 	if repost_doc and repost_doc.gl_reposting_index:
@@ -1603,8 +1603,7 @@ def repost_gle_for_stock_vouchers(
 			voucher_obj = frappe.get_lazy_doc(voucher_type, voucher_no)
 			# Some transactions post credit as negative debit, this is handled while posting GLE
 			# but while comparing we need to make sure it's flipped so comparisons are accurate
-			inventory_account_map = voucher_obj.get_inventory_account_map()
-			expected_gle = toggle_debit_credit_if_negative(voucher_obj.get_gl_entries(inventory_account_map))
+			expected_gle = toggle_debit_credit_if_negative(voucher_obj.get_gl_entries({}))
 			if expected_gle:
 				if not existing_gle or not compare_existing_and_expected_gle(
 					existing_gle, expected_gle, precision
