@@ -767,6 +767,7 @@ erpnext.utils.update_child_items = function (opts) {
 	}
 
 	let dialog = new frappe.ui.Dialog({
+	const dialog = new frappe.ui.Dialog({
 		title: __("Update Items"),
 		size: "extra-large",
 		fields: [
