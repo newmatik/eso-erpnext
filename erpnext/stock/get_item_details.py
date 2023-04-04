@@ -1299,9 +1299,13 @@ def get_party_item_code(ctx: ItemDetailsCtx, item_doc, out: ItemDetails):
 			return
 
 		customer_item_code = item_doc.get("customer_items", {"customer_name": ctx.customer})
-
 		if customer_item_code:
-			out.customer_item_code = customer_item_code[0].ref_code
+			if len(customer_item_code) > 1:
+				# list reversed to select idx 1 in customer detail
+				for item in reversed(customer_item_code):
+					out.customer_item_code = item.ref_code
+			else:
+				out.customer_item_code = customer_item_code[0].ref_code
 		else:
 			customer_group = frappe.get_cached_value("Customer", ctx.customer, "customer_group")
 			customer_group_item_code = item_doc.get("customer_items", {"customer_group": customer_group})
