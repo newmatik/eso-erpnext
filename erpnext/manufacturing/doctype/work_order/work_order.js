@@ -854,7 +854,7 @@ erpnext.work_order = {
 							}
 						}
 						if (counter > 0) {
-							frm.add_custom_button(
+							var consumption_btn = frm.add_custom_button(
 								__("Material Consumption"),
 								function () {
 									const backflush_raw_materials_based_on =
