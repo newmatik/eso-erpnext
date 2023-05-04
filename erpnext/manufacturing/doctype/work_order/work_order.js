@@ -768,9 +768,8 @@ erpnext.work_order = {
 										frm,
 										backflush_raw_materials_based_on
 									);
-								}
+								}, __("Create")
 							);
-							consumption_btn.addClass("btn-primary");
 						}
 					}
 				}
