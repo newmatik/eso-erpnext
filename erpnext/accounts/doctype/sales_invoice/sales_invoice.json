@@ -500,6 +500,7 @@
    "label": "Billing Address"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "customer_address",
    "fieldtype": "Link",
    "hide_days": 1,
@@ -571,6 +572,7 @@
    "hide_seconds": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "shipping_address_name",
    "fieldtype": "Link",
    "hide_days": 1,
@@ -589,6 +591,7 @@
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "company_address",
    "fieldtype": "Link",
    "hide_days": 1,
@@ -2338,7 +2341,6 @@
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Sales Invoice",
- "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -2385,7 +2387,6 @@
  "show_name_in_global_search": 1,
  "sort_field": "creation",
  "sort_order": "DESC",
- "states": [],
  "timeline_field": "customer",
  "title_field": "customer_name",
  "track_changes": 1,
