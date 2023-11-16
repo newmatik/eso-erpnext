@@ -541,14 +541,17 @@ erpnext.selling.SalesOrderController = class SalesOrderController extends erpnex
 								() => this.make_delivery_note_based_on_delivery_date(true),
 								__("Create")
 							);
+
+                        // changed for newmatik process.
 						}
 
 						if (frappe.model.can_create("Work Order")) {
-							this.frm.add_custom_button(
+							// this.frm.add_custom_button(
 								__("Work Order"),
 								() => this.make_work_order(),
 								__("Create")
 							);
+						this.frm.add_custom_button(__('Work Order'), () => make_work_order_newmatik(), __('Create'));
 						}
 					}
 
@@ -1265,3 +1268,97 @@ erpnext.selling.SalesOrderController = class SalesOrderController extends erpnex
 };
 
 extend_cscript(cur_frm.cscript, new erpnext.selling.SalesOrderController({ frm: cur_frm }));
+
+var make_work_order_newmatik = function (frm) {
+    frappe.call({
+      method: "newmatik.api.sales_order.get_work_order_items",
+      args: {
+        items: cur_frm.doc.items,
+        sales_order: cur_frm.docname,
+        company: cur_frm.doc.company
+      },
+      callback: function(r) {
+        if(!r.message) {
+          frappe.msgprint({
+            title: __('Work Order not created'),
+            message: __('No Items with Bill of Materials to Manufacture'),
+            indicator: 'orange'
+          });
+          return;
+        }
+        else if(!r.message) {
+          frappe.msgprint({
+            title: __('Work Order not created'),
+            message: __('Work Order already created for all items with BOM'),
+            indicator: 'orange'
+          });
+          return;
+        } else {
+          const fields = [{
+            label: 'Items',
+            fieldtype: 'Table',
+            fieldname: 'items',
+            description: __('Select BOM and Qty for Production'),
+            fields: [{
+              fieldtype: 'Read Only',
+              fieldname: 'item_code',
+              label: __('Item Code'),
+              in_list_view: 1
+            }, {
+              fieldtype: 'Link',
+              fieldname: 'bom',
+              options: 'BOM',
+              reqd: 1,
+              label: __('Select BOM'),
+              in_list_view: 1,
+              get_query: function (doc) {
+                return { filters: { item: doc.item_code } };
+              }
+            }, {
+              fieldtype: 'Float',
+              fieldname: 'pending_qty',
+              reqd: 1,
+              label: __('Qty'),
+              in_list_view: 1
+            }, {
+              fieldtype: 'Link',
+              fieldname: 'company',
+              options: 'Company',
+              reqd: 1,
+              label: __('Company'),
+              in_list_view: 1
+            }, {
+              fieldtype: 'Data',
+              fieldname: 'sales_order_item',
+              reqd: 1,
+              label: __('Sales Order Item'),
+              hidden: 1
+            }],
+            data: r.message,
+            get_data: () => {
+              return r.message
+            }
+          }]
+          var d = new frappe.ui.Dialog({
+            title: __('Select Items to Manufacture'),
+            fields: fields,
+            primary_action: function() {
+              d.hide();
+              var data = d.get_values();
+              cur_frm.call({
+                method: 'newmatik.api.sales_order.make_work_orders',
+                args: {
+                  items: data,
+                  sales_order: cur_frm.docname
+                },
+                freeze: true,
+                freeze_message: __("Creating Work Orders")
+              });
+            },
+            primary_action_label: __('Create')
+          });
+          d.show();
+        }
+      }
+    });
+  }
