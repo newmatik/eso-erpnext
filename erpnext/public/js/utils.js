@@ -726,7 +726,14 @@ erpnext.utils.update_child_items = function (opts) {
 			in_list_view: 1,
 			label: __("Reqd By Date")
 		})
-	}
+	} else if (frm.doc.doctype == "Purchase Order"){
+        fields.splice(2,0, {
+            fieldtype: 'Date',
+			fieldname: "expected_delivery_date",
+			in_list_view: 1,
+			label: __("Expected Delivery Date")
+        })
+    }
 
 	if (
 		frm.doc.doctype == "Purchase Order" &&
@@ -814,6 +821,7 @@ erpnext.utils.update_child_items = function (opts) {
 				"item_code": d.item_code,
 				"reqd_by_date": d.reqd_by_date,
 				"delivery_date": d.delivery_date,
+                "expected_delivery_date": d.expected_delivery_date,
 				"schedule_date": d.schedule_date,
 				"conversion_factor": d.conversion_factor,
 				"qty": d.qty,
