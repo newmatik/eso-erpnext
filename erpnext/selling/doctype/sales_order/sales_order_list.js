@@ -8,7 +8,11 @@ frappe.listview_settings['Sales Order'] = {
 		} else if (doc.status === "On Hold") {
 			// on hold
 			return [__("On Hold"), "orange", "status,=,On Hold"];
-		} else if (doc.status === "Completed") {
+		} else if (doc.status === "Discontinued") {
+            // Discontinued
+            return [__("Discontinued"), "red", "status,=,Discontinued"];
+         }
+         else if (doc.status === "Completed") {
 			return [__("Completed"), "green", "status,=,Completed"];
 		} else if (!doc.skip_delivery_note && flt(doc.per_delivered, 6) < 100) {
 			if (frappe.datetime.get_diff(doc.delivery_date) < 0) {
