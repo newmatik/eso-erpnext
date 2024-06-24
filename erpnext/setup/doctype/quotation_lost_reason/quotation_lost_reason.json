@@ -36,7 +36,6 @@
  "modified_by": "Administrator",
  "module": "Setup",
  "name": "Quotation Lost Reason",
- "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
