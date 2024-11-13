@@ -136,8 +136,6 @@ class Item(Document):
 		if self.is_customer_provided_item:
 			if self.is_purchase_item:
 				frappe.throw(_('"Customer Provided Item" cannot be Purchase Item also'))
-			if self.valuation_rate:
-				frappe.throw(_('"Customer Provided Item" cannot have Valuation Rate'))
 			self.default_material_request_type = "Customer Provided"
 
 	def add_price(self, price_list=None):
