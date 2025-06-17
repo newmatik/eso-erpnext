@@ -843,7 +843,7 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 		},
 		callback:function(r){
 			cur_frm.alt_list_data =  r.message || [];
-			
+
 
 			var current_item_selection_idx = cur_frm.alt_list_data.findIndex(item => item.alt_item === current_item)
 			if (current_item_selection_idx != -1) {

@@ -1273,26 +1273,63 @@ def remove_bomline_alt_items(bom, parent_item_code):
 
 @frappe.whitelist()
 def get_bomline_alternative_items(bom, amended_from, parent_item_code):
-	"""
-		Get related BOM Item, BOM Line Alternative Item
-		In the case of amend process the first time the user asks for the doctype
-		get the list from amended_from even if no save.
-		Its the dom state like just hitting duplicate button with no actions.
-	"""
-	items_bom = frappe.db.sql(
-		"""
-			select alt_item, name, FORMAT(qty, 2) as qty
-			from `tabBOM Line Alternative Item`
-		    where bom=%s and item=%s order by idx
-		""", (bom, parent_item_code), as_dict=1)
-	if len(items_bom) > 0:
-		return items_bom
-	return frappe.db.sql(
-		"""
-			select alt_item, name, FORMAT(qty, 2) as qty
-			from `tabBOM Line Alternative Item`
-		    where bom=%s and item=%s order by idx
-		""", (amended_from, parent_item_code), as_dict=1)
+    """
+        Get related BOM Item, BOM Line Alternative Item
+        In the case of amend process the first time the user asks for the doctype
+        get the list from amended_from even if no save.
+        Its the dom state like just hitting duplicate button with no actions.
+    """
+    # Get items where parent_item_code is the item
+    items_bom = frappe.db.sql(
+        """
+            select alt_item, name, FORMAT(qty, 2) as qty
+            from `tabBOM Line Alternative Item`
+            where bom=%s and item=%s order by idx
+        """, (bom, parent_item_code), as_dict=1)
+
+    # Get items where parent_item_code is the alt_item
+    reverse_items = frappe.db.sql(
+        """
+            select item as alt_item, name, FORMAT(qty, 2) as qty
+            from `tabBOM Line Alternative Item`
+            where bom=%s and alt_item=%s order by idx
+        """, (bom, parent_item_code), as_dict=1)
+
+    # Combine both results and remove duplicates
+    seen = set()
+    all_items = []
+    for item in items_bom + reverse_items:
+        if item['alt_item'] not in seen:
+            seen.add(item['alt_item'])
+            all_items.append(item)
+
+    if len(all_items) > 0:
+        return all_items
+
+    # If no items found, try with amended_from
+    items_bom = frappe.db.sql(
+        """
+            select alt_item, name, FORMAT(qty, 2) as qty
+            from `tabBOM Line Alternative Item`
+            where bom=%s and item=%s order by idx
+        """, (amended_from, parent_item_code), as_dict=1)
+
+    reverse_items = frappe.db.sql(
+        """
+            select item as alt_item, name, FORMAT(qty, 2) as qty
+            from `tabBOM Line Alternative Item`
+            where bom=%s and alt_item=%s order by idx
+        """, (amended_from, parent_item_code), as_dict=1)
+
+    # Combine both results and remove duplicates
+    seen = set()
+    all_items = []
+    for item in items_bom + reverse_items:
+        if item['alt_item'] not in seen:
+            seen.add(item['alt_item'])
+            all_items.append(item)
+
+    return all_items
 
 
 @frappe.whitelist()
