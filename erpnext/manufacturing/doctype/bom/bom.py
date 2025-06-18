@@ -1248,13 +1248,15 @@ def setup_bomline_alternative_items(items, bom, parent_item_code):
 
 
 @frappe.whitelist()
-def remove_bomline_alt_items(bom, parent_item_code):
+def remove_bomline_alt_items(bom, parent_item_code, alt_item_code=None):
 	"""
-		Remove related BOM Item Alternative items
+		Remove related BOM Item Alternative items in both directions
 
 		:params:bom
 		:params:parent_item_code
+		:params:alt_item_code - optional, if provided will remove bidirectional relationship
 	"""
+	# Delete where parent_item_code is the item
 	bomline_alt_items = frappe.db.sql(
 		"""
 			select name, alt_item
@@ -1268,6 +1270,23 @@ def remove_bomline_alt_items(bom, parent_item_code):
 			where name=%s
 		""",(item['name']))
 		frappe.db.commit()
+
+	# If alt_item_code is provided, also delete the reverse relationship
+	if alt_item_code:
+		reverse_items = frappe.db.sql(
+			"""
+				select name, alt_item
+				from `tabBOM Line Alternative Item`
+				where bom=%s and item=%s and alt_item=%s
+			""", (bom, alt_item_code, parent_item_code), as_dict=1)
+		for item in reverse_items:
+			frappe.db.sql(
+			"""
+				delete from `tabBOM Line Alternative Item`
+				where name=%s
+			""",(item['name']))
+			frappe.db.commit()
+
 	return "Deleted related Bomline Alt items"
 
 
@@ -1303,6 +1322,8 @@ def get_bomline_alternative_items(bom, amended_from, parent_item_code):
             seen.add(item['alt_item'])
             all_items.append(item)
 
+    frappe.log(f"[BOM Backend] Alternatives for {parent_item_code}: {all_items}")
+
     if len(all_items) > 0:
         return all_items
 
@@ -1328,6 +1349,8 @@ def get_bomline_alternative_items(bom, amended_from, parent_item_code):
         if item['alt_item'] not in seen:
             seen.add(item['alt_item'])
             all_items.append(item)
+
+    frappe.log(f"[BOM Backend] Alternatives for {parent_item_code} (amended): {all_items}")
 
     return all_items
 

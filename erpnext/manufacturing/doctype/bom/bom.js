@@ -722,27 +722,46 @@ frappe.ui.form.on("BOM Item", "item_code", function(frm, cdt, cdn) {
 });
 
 frappe.ui.form.on("BOM Item", "setup_alt_item_btn", function(frm, cdt, cdn) {
-	var d = locals[cdt][cdn]
+	var d = locals[cdt][cdn];
 	if (cur_frm.doc.__islocal){
-		// You must have at least reference to BOM parent
-		// for setting up a alter
-		frappe.throw("You must save before selecting Alternative Item")
-    } else {
+		frappe.throw("You must save before selecting Alternative Item");
+	} else {
+		// If original_item is not set, set it to the current item_code (the true original)
+		if (!d.original_item) {
+			frappe.model.set_value(cdt, cdn, "original_item", d.item_code);
+		}
+		// Always use the true original_item as the anchor
 		cur_frm.select_bomline_alternate_items({
 			frm: frm,
 			cdn: cdn,
 			cdt: cdt,
 			current_item: d.item_code,
-			item_code: d.original_item,
+			item_code: d.original_item || d.item_code,
 			has_alternatives: d.has_alternatives,
 			bom: d.parent,
 			amended_from: cur_frm.doc.amended_from || null,
 			parent_d: d.parent,
 			init_qty: d.qty
-		})
+		});
 	}
 });
 
+frappe.ui.form.on("BOM Item", "switch_to_alt", function(frm, cdt, cdn) {
+	var d = locals[cdt][cdn];
+	// Always use the true original item as the anchor
+	cur_frm.select_bomline_alternate_items({
+		frm: frm,
+		cdn: cdn,
+		cdt: cdt,
+		current_item: d.item_code,
+		item_code: d.original_item || d.item_code,
+		has_alternatives: d.has_alternatives,
+		bom: d.parent,
+		amended_from: cur_frm.doc.amended_from || null,
+		parent_d: d.parent,
+		init_qty: d.qty
+	});
+});
 
 cur_frm.select_bomline_alternate_items = function(opts) {
 	const parent_item_code = opts.item_code;
@@ -815,13 +834,28 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 			}
 		],
 		primary_action: function() {
+			// Safety: always use the true original item as anchor
+			let anchor_item = parent_item_code;
+			if (!anchor_item) {
+				console.warn('[BOM Switch] No parent_item_code found, using current_item:', current_item);
+				anchor_item = current_item;
+			}
+			// Ensure the anchor/original item is present in the list before sending to backend
+			var already_in_list = cur_frm.alt_list_data.find(item => item.alt_item === anchor_item);
+			if (!already_in_list) {
+				cur_frm.alt_list_data.unshift({
+					alt_item: anchor_item,
+					qty: init_qty
+				});
+			}
+			console.log('[BOM Switch] Saving alternatives for anchor:', anchor_item, 'with items:', cur_frm.alt_list_data.map(x => x.alt_item));
 			frappe.call({
 				method: 'erpnext.manufacturing.doctype.bom.bom.setup_bomline_alternative_items',
 				freeze: true,
 				args: {
 					items: cur_frm.alt_list_data,
 					bom: parent_d,
-					parent_item_code: parent_item_code
+					parent_item_code: anchor_item
 				},
 				callback:function(r){
 					cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data)
@@ -844,20 +878,47 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 		callback:function(r){
 			cur_frm.alt_list_data =  r.message || [];
 
-
+			// Remove the current item from the list
 			var current_item_selection_idx = cur_frm.alt_list_data.findIndex(item => item.alt_item === current_item)
 			if (current_item_selection_idx != -1) {
 				cur_frm.alt_list_data.splice(current_item_selection_idx, 1)
 			}
+
+			// Always include the original item (parent_item_code) unless it's the current item
+			if (current_item !== parent_item_code) {
+				var already_in_list = cur_frm.alt_list_data.find(item => item.alt_item === parent_item_code);
+				if (!already_in_list) {
+					console.log('[BOM Switch] Adding original item to alternatives:', parent_item_code);
+					cur_frm.alt_list_data.unshift({
+						alt_item: parent_item_code,
+						qty: init_qty
+					});
+				}
+			}
+
+			console.log('[BOM Switch] Alternatives shown:', cur_frm.alt_list_data.map(x => x.alt_item));
 			cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data)
 			cur_frm.set_alt_items()
 		}
 	})
 	cur_frm.remove_row = function(i){
 		// remove a row
+		var item_to_remove = cur_frm.alt_list_data[i];
 		cur_frm.alt_list_data.splice(i, 1);
-		cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data)
-		cur_frm.set_alt_items()
+
+		// Delete from database - both directions
+		frappe.call({
+			method: 'erpnext.manufacturing.doctype.bom.bom.remove_bomline_alt_items',
+			args: {
+				bom: cur_frm.doc.name,
+				parent_item_code: item_to_remove.alt_item,
+				alt_item_code: parent_item_code
+			},
+			callback: function(r) {
+				cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data);
+				cur_frm.set_alt_items();
+			}
+		});
 	}
 	cur_frm.update_qty = function(i){
 		cur_frm.alt_list_data[i].qty = $("#data-qty-"+i).val();
