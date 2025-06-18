@@ -1202,12 +1202,10 @@ def setup_bomline_alternative_items(items, bom, parent_item_code):
         to_delete = [alt['name'] for alt in existing_alts if alt['alt_item'] not in item_alternatives]
 
         if to_delete:
-            frappe.db.sql(
-                """
-                delete from `tabBOM Line Alternative Item`
-                where name in %s
-                """, (to_delete,))
-            frappe.db.commit()
+            frappe.db.delete(
+                "BOM Line Alternative Item",
+                {"name": ("in", tuple(to_delete))}
+            )
 
         # Create or update alternatives
         for alt_item in item_alternatives:
@@ -1226,7 +1224,6 @@ def setup_bomline_alternative_items(items, bom, parent_item_code):
                 # Update existing
                 d = frappe.get_doc("BOM Line Alternative Item", existing[0].name)
                 d.qty = qty
-                d.save()
             else:
                 # Create new
                 d = frappe.new_doc('BOM Line Alternative Item')
@@ -1234,8 +1231,7 @@ def setup_bomline_alternative_items(items, bom, parent_item_code):
                 d.item = current_item
                 d.alt_item = alt_item
                 d.qty = qty
-                d.save()
-            frappe.db.commit()
+            d.save()
 
     # Return updated list of alternatives for the parent item
     return frappe.db.sql(
