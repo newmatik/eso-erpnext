@@ -1322,7 +1322,6 @@ def get_bomline_alternative_items(bom, amended_from, parent_item_code):
     else:
         all_items = []
 
-    print(f"[BOM Backend] Alternatives for {parent_item_code} (group): {all_items}")
 
     return all_items
 

@@ -848,19 +848,16 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 			// Safety: always use the true original item as anchor
 			let anchor_item = parent_item_code;
 			if (!anchor_item) {
-				console.warn('[BOM Switch] No parent_item_code found, using current_item:', current_item);
 				anchor_item = current_item;
 			}
 			// Ensure the anchor/original item is present in the list before sending to backend
 			var already_in_list = cur_frm.alt_list_data.find(item => item.alt_item === anchor_item);
 			if (!already_in_list) {
-				console.log('[BOM Switch] Adding original item to alternatives:', anchor_item, 'with items:', cur_frm.alt_list_data.map(x => x.alt_item));
 				cur_frm.alt_list_data.unshift({
 					alt_item: anchor_item,
 					qty: init_qty
 				});
 			}
-			console.log('[BOM Switch] Saving alternatives for anchor:', anchor_item, 'with items:', cur_frm.alt_list_data.map(x => x.alt_item));
 			frappe.call({
 				method: 'erpnext.manufacturing.doctype.bom.bom.setup_bomline_alternative_items',
 				freeze: true,
@@ -899,7 +896,6 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 			}
 
 			// Do NOT add the anchor/original item here. Just render what the backend returns.
-			console.log('[BOM Switch] Alternatives shown:', cur_frm.alt_list_data.map(x => x.alt_item));
 			cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data)
 			cur_frm.set_alt_items()
 		}
