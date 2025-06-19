@@ -1289,64 +1289,40 @@ def remove_bomline_alt_items(bom, parent_item_code, alt_item_code=None):
 @frappe.whitelist()
 def get_bomline_alternative_items(bom, amended_from, parent_item_code):
     """
-        Get related BOM Item, BOM Line Alternative Item
-        In the case of amend process the first time the user asks for the doctype
-        get the list from amended_from even if no save.
-        Its the dom state like just hitting duplicate button with no actions.
+    Return the full set of alternatives for the group anchored by the original item,
+    but do not include the anchor item as its own alternative.
     """
-    # Get items where parent_item_code is the item
+    anchor_item = parent_item_code
+
     items_bom = frappe.db.sql(
         """
             select alt_item, name, FORMAT(qty, 2) as qty
             from `tabBOM Line Alternative Item`
-            where bom=%s and item=%s order by idx
-        """, (bom, parent_item_code), as_dict=1)
-
-    # Get items where parent_item_code is the alt_item
-    reverse_items = frappe.db.sql(
-        """
-            select item as alt_item, name, FORMAT(qty, 2) as qty
-            from `tabBOM Line Alternative Item`
-            where bom=%s and alt_item=%s order by idx
-        """, (bom, parent_item_code), as_dict=1)
-
-    # Combine both results and remove duplicates
-    seen = set()
-    all_items = []
-    for item in items_bom + reverse_items:
-        if item['alt_item'] not in seen:
-            seen.add(item['alt_item'])
-            all_items.append(item)
-
-    frappe.log(f"[BOM Backend] Alternatives for {parent_item_code}: {all_items}")
-
-    if len(all_items) > 0:
-        return all_items
-
-    # If no items found, try with amended_from
-    items_bom = frappe.db.sql(
-        """
-            select alt_item, name, FORMAT(qty, 2) as qty
-            from `tabBOM Line Alternative Item`
-            where bom=%s and item=%s order by idx
-        """, (amended_from, parent_item_code), as_dict=1)
+            where bom=%s and item=%s
+        """, (bom, anchor_item), as_dict=1)
 
     reverse_items = frappe.db.sql(
         """
             select item as alt_item, name, FORMAT(qty, 2) as qty
             from `tabBOM Line Alternative Item`
-            where bom=%s and alt_item=%s order by idx
-        """, (amended_from, parent_item_code), as_dict=1)
+            where bom=%s and alt_item=%s
+        """, (bom, anchor_item), as_dict=1)
 
-    # Combine both results and remove duplicates
-    seen = set()
-    all_items = []
+    # Combine all unique alt_items (excluding the anchor/original item itself)
+    all_items_set = set()
     for item in items_bom + reverse_items:
-        if item['alt_item'] not in seen:
-            seen.add(item['alt_item'])
-            all_items.append(item)
+        if item['alt_item'] != anchor_item:
+            all_items_set.add(item['alt_item'])
 
-    frappe.log(f"[BOM Backend] Alternatives for {parent_item_code} (amended): {all_items}")
+    # Only build the list if there is at least one alternative
+    if all_items_set:
+        # Optionally, you can include the anchor item at the top for switching, if needed
+        all_items = [{'alt_item': anchor_item, 'qty': '1.00', 'name': ''}]
+        all_items += [{'alt_item': item, 'qty': '1.00', 'name': ''} for item in all_items_set]
+    else:
+        all_items = []
+
+    print(f"[BOM Backend] Alternatives for {parent_item_code} (group): {all_items}")
 
     return all_items
 

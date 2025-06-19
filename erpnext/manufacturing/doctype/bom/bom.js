@@ -748,13 +748,24 @@ frappe.ui.form.on("BOM Item", "setup_alt_item_btn", function(frm, cdt, cdn) {
 
 frappe.ui.form.on("BOM Item", "switch_to_alt", function(frm, cdt, cdn) {
 	var d = locals[cdt][cdn];
-	// Always use the true original item as the anchor
+	// Fallback: find the original_item from any other row if not set
+	let original_item = d.original_item;
+	if (!original_item) {
+		// Try to find from other BOM Items in the same parent
+		let items = frm.doc.items || [];
+		let found = items.find(row => row.original_item && row.item_code !== d.item_code);
+		if (found) {
+			original_item = found.original_item;
+		} else {
+			original_item = d.item_code; // fallback, but this is not ideal
+		}
+	}
 	cur_frm.select_bomline_alternate_items({
 		frm: frm,
 		cdn: cdn,
 		cdt: cdt,
 		current_item: d.item_code,
-		item_code: d.original_item || d.item_code,
+		item_code: original_item,
 		has_alternatives: d.has_alternatives,
 		bom: d.parent,
 		amended_from: cur_frm.doc.amended_from || null,
@@ -822,8 +833,8 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 							"alt_item": item_code,
 							"qty": init_qty
 						});
-						cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data)
-						cur_frm.set_alt_items()
+						cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data);
+						cur_frm.set_alt_items();
 				  }
 				}
 			},
@@ -843,6 +854,7 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 			// Ensure the anchor/original item is present in the list before sending to backend
 			var already_in_list = cur_frm.alt_list_data.find(item => item.alt_item === anchor_item);
 			if (!already_in_list) {
+				console.log('[BOM Switch] Adding original item to alternatives:', anchor_item, 'with items:', cur_frm.alt_list_data.map(x => x.alt_item));
 				cur_frm.alt_list_data.unshift({
 					alt_item: anchor_item,
 					qty: init_qty
@@ -878,24 +890,15 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 		callback:function(r){
 			cur_frm.alt_list_data =  r.message || [];
 
-			// Remove the current item from the list
-			var current_item_selection_idx = cur_frm.alt_list_data.findIndex(item => item.alt_item === current_item)
-			if (current_item_selection_idx != -1) {
-				cur_frm.alt_list_data.splice(current_item_selection_idx, 1)
-			}
-
-			// Always include the original item (parent_item_code) unless it's the current item
+			// Only remove the current item if it is NOT the original item
 			if (current_item !== parent_item_code) {
-				var already_in_list = cur_frm.alt_list_data.find(item => item.alt_item === parent_item_code);
-				if (!already_in_list) {
-					console.log('[BOM Switch] Adding original item to alternatives:', parent_item_code);
-					cur_frm.alt_list_data.unshift({
-						alt_item: parent_item_code,
-						qty: init_qty
-					});
+				var current_item_selection_idx = cur_frm.alt_list_data.findIndex(item => item.alt_item === current_item)
+				if (current_item_selection_idx != -1) {
+					cur_frm.alt_list_data.splice(current_item_selection_idx, 1)
 				}
 			}
 
+			// Do NOT add the anchor/original item here. Just render what the backend returns.
 			console.log('[BOM Switch] Alternatives shown:', cur_frm.alt_list_data.map(x => x.alt_item));
 			cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data)
 			cur_frm.set_alt_items()
