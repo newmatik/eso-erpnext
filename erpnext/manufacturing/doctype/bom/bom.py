@@ -1172,12 +1172,6 @@ def setup_bomline_alternative_items(items, bom, parent_item_code):
     Update related BOM Item and BOM Line Alternative Item
     Creates alternative items for each possible combination to ensure proper display in BOMs and WOs
     """
-    bomline_alt_items = frappe.db.sql(
-        """
-        select name, alt_item
-        from `tabBOM Line Alternative Item`
-        where bom=%s and item=%s
-        """, (bom, parent_item_code), as_dict=1)
     items = json.loads(items)
 
     # Get all possible items (parent + alternatives)
@@ -1198,7 +1192,6 @@ def setup_bomline_alternative_items(items, bom, parent_item_code):
         item_alternatives = [item for item in all_items if item != current_item]
 
         # Delete removed alternatives
-        current_alts = [alt['alt_item'] for alt in existing_alts]
         to_delete = [alt['name'] for alt in existing_alts if alt['alt_item'] not in item_alternatives]
 
         if to_delete:
@@ -1314,14 +1307,8 @@ def get_bomline_alternative_items(bom, amended_from, parent_item_code):
         if item['alt_item'] != anchor_item:
             all_items_set.add(item['alt_item'])
 
-    # Only build the list if there is at least one alternative
-    if all_items_set:
-        # Optionally, you can include the anchor item at the top for switching, if needed
-        all_items = [{'alt_item': anchor_item, 'qty': '1.00', 'name': ''}]
-        all_items += [{'alt_item': item, 'qty': '1.00', 'name': ''} for item in all_items_set]
-    else:
-        all_items = []
 
+    all_items = [{'alt_item': item, 'qty': '1.00', 'name': ''} for item in all_items_set]
 
     return all_items
 
