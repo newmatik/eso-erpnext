@@ -724,19 +724,36 @@ frappe.ui.form.on("BOM Item", "item_code", function(frm, cdt, cdn) {
 frappe.ui.form.on("BOM Item", "setup_alt_item_btn", function(frm, cdt, cdn) {
 	var d = locals[cdt][cdn];
 	if (cur_frm.doc.__islocal){
-		frappe.throw("You must save before selecting Alternative Item");
+		frappe.throw(__("You must save before selecting Alternative Item"));
 	} else {
 		// If original_item is not set, set it to the current item_code (the true original)
 		if (!d.original_item) {
 			frappe.model.set_value(cdt, cdn, "original_item", d.item_code);
 		}
-		// Always use the true original_item as the anchor
+
+		// Determine the anchor item - use the original item if it still exists in the BOM,
+		// otherwise use the current item as the anchor
+		let anchor_item = d.original_item || d.item_code;
+		if (d.original_item && d.original_item !== d.item_code) {
+			// Check if the original item still exists in the BOM
+			let original_item_exists = false;
+			if (frm.doc.items) {
+				original_item_exists = frm.doc.items.some(item =>
+					item.item_code === d.original_item && !item.__deleted
+				);
+			}
+			// If original item doesn't exist in BOM, use current item as anchor
+			if (!original_item_exists) {
+				anchor_item = d.item_code;
+			}
+		}
+
 		cur_frm.select_bomline_alternate_items({
 			frm: frm,
 			cdn: cdn,
 			cdt: cdt,
 			current_item: d.item_code,
-			item_code: d.original_item || d.item_code,
+			item_code: anchor_item,
 			has_alternatives: d.has_alternatives,
 			bom: d.parent,
 			amended_from: cur_frm.doc.amended_from || null,
@@ -760,12 +777,30 @@ frappe.ui.form.on("BOM Item", "switch_to_alt", function(frm, cdt, cdn) {
 			original_item = d.item_code; // fallback, but this is not ideal
 		}
 	}
+
+	// Determine the anchor item - use the original item if it still exists in the BOM,
+	// otherwise use the current item as the anchor
+	let anchor_item = original_item;
+	if (original_item && original_item !== d.item_code) {
+		// Check if the original item still exists in the BOM
+		let original_item_exists = false;
+		if (frm.doc.items) {
+			original_item_exists = frm.doc.items.some(item =>
+				item.item_code === original_item && !item.__deleted
+			);
+		}
+		// If original item doesn't exist in BOM, use current item as anchor
+		if (!original_item_exists) {
+			anchor_item = d.item_code;
+		}
+	}
+
 	cur_frm.select_bomline_alternate_items({
 		frm: frm,
 		cdn: cdn,
 		cdt: cdt,
 		current_item: d.item_code,
-		item_code: original_item,
+		item_code: anchor_item,
 		has_alternatives: d.has_alternatives,
 		bom: d.parent,
 		amended_from: cur_frm.doc.amended_from || null,
@@ -808,7 +843,14 @@ cur_frm.select_bomline_alternate_items = function(opts) {
             });
             frappe.model.set_value('BOM Item', cdn, 'selected_alt_items', selected_items.join());
         }
-    var allready_selected = Object.keys(cur_frm.alt_list_data).map(key => cur_frm.alt_list_data[key].alt_item)
+    // Build already selected items list from current alt_list_data
+    var allready_selected = cur_frm.alt_list_data.map(item => item.alt_item);
+
+    // Always include the current item in the already selected list to prevent adding it
+    if (!allready_selected.includes(current_item)) {
+        allready_selected.push(current_item);
+    }
+
 	const d = new frappe.ui.Dialog({
 		title: __("Select Alternate Items:") + current_item,
 		fields: [
@@ -818,7 +860,7 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 				options: 'Item',
 				label: __('Add Item'),
 				get_query: () => {
-                    allready_selected.push(current_item)
+                    // Use the already selected list (which already includes current item)
 					return {
 			           filters: [
 			   			['Item', 'item_code', 'not in', allready_selected] // not in!!!
@@ -827,14 +869,21 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 			    },
 				onchange: function() {
 				  var item_code = this.get_value();
-				  if (item_code && !allready_selected.includes(item_code)) {
-						d.set_value("add_regular_item", null);
-						cur_frm.alt_list_data.push({
-							"alt_item": item_code,
-							"qty": init_qty
-						});
-						cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data);
-						cur_frm.set_alt_items();
+
+				  if (item_code) {
+						// Check if item is already in the current list
+						var already_exists = cur_frm.alt_list_data.some(item => item.alt_item === item_code);
+
+						if (!already_exists) {
+							cur_frm.alt_list_data.push({
+								"alt_item": item_code,
+								"qty": init_qty
+							});
+							// Update the already selected list
+							allready_selected = cur_frm.alt_list_data.map(item => item.alt_item);
+							cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data);
+							cur_frm.set_alt_items();
+						}
 				  }
 				}
 			},
@@ -850,21 +899,40 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 			if (!anchor_item) {
 				anchor_item = current_item;
 			}
-			// Ensure the anchor/original item is present in the list before sending to backend
-			var already_in_list = cur_frm.alt_list_data.find(item => item.alt_item === anchor_item);
-			if (!already_in_list) {
-				cur_frm.alt_list_data.unshift({
-					alt_item: anchor_item,
-					qty: init_qty
-				});
+
+			// Check if the anchor item still exists in the current BOM
+			let anchor_item_exists = false;
+			if (cur_frm.doc.items) {
+				anchor_item_exists = cur_frm.doc.items.some(item =>
+					item.item_code === anchor_item && !item.__deleted
+				);
 			}
+
+			// Check if there are alternatives for this anchor item
+			let has_alternatives = cur_frm.alt_list_data.length > 0;
+
+			// Include the anchor item if:
+			// 1. It exists in the BOM, OR
+			// 2. It has alternatives (meaning it was switched away from, not deleted)
+			// 3. It's NOT the current item (you can't switch to what you're already using)
+			if ((anchor_item_exists || has_alternatives) && anchor_item !== current_item) {
+				var already_in_list = cur_frm.alt_list_data.find(item => item.alt_item === anchor_item);
+				if (!already_in_list) {
+					cur_frm.alt_list_data.unshift({
+						alt_item: anchor_item,
+						qty: init_qty
+					});
+				}
+			}
+
 			frappe.call({
 				method: 'erpnext.manufacturing.doctype.bom.bom.setup_bomline_alternative_items',
 				freeze: true,
 				args: {
 					items: cur_frm.alt_list_data,
 					bom: parent_d,
-					parent_item_code: anchor_item
+					parent_item_code: anchor_item,
+					current_item: current_item
 				},
 				callback:function(r){
 					cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data)
@@ -882,17 +950,25 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 		args: {
 			bom: bom,
 			amended_from: amended_from,
-			parent_item_code: parent_item_code
+			parent_item_code: parent_item_code,
+			current_item: current_item
 		},
-		callback:function(r){
+				callback:function(r){
 			cur_frm.alt_list_data =  r.message || [];
 
-			// Only remove the current item if it is NOT the original item
-			if (current_item !== parent_item_code) {
-				var current_item_selection_idx = cur_frm.alt_list_data.findIndex(item => item.alt_item === current_item)
-				if (current_item_selection_idx != -1) {
-					cur_frm.alt_list_data.splice(current_item_selection_idx, 1)
-				}
+			// Always remove the current item from the alternatives list
+			// because you can't switch to the item you're already using
+			var current_item_selection_idx = cur_frm.alt_list_data.findIndex(item => item.alt_item === current_item)
+			if (current_item_selection_idx != -1) {
+				cur_frm.alt_list_data.splice(current_item_selection_idx, 1)
+			}
+
+			// Update the already selected list based on the new data
+			allready_selected = cur_frm.alt_list_data.map(item => item.alt_item);
+
+			// Always include the current item in the already selected list
+			if (!allready_selected.includes(current_item)) {
+				allready_selected.push(current_item);
 			}
 
 			// Do NOT add the anchor/original item here. Just render what the backend returns.
@@ -904,6 +980,12 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 		// remove a row
 		var item_to_remove = cur_frm.alt_list_data[i];
 		cur_frm.alt_list_data.splice(i, 1);
+
+		// Remove from already selected list
+		var index = allready_selected.indexOf(item_to_remove.alt_item);
+		if (index > -1) {
+			allready_selected.splice(index, 1);
+		}
 
 		// Delete from database - both directions
 		frappe.call({
