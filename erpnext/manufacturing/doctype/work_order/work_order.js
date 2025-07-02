@@ -549,14 +549,12 @@ cur_frm.select_workline_alternate_item = function(opts) {
 			if (current_item_selection !== item_code) {
 				var already_in_list = cur_frm.alt_list_data.find(item => item.alt_item === item_code);
 				if (!already_in_list) {
-					console.log('[WO Switch] Adding original item to alternatives:', item_code);
 					cur_frm.alt_list_data.unshift({
 						alt_item: item_code
 					});
 				}
 			}
 
-			console.log('[WO Switch] Alternatives shown:', cur_frm.alt_list_data.map(x => x.alt_item));
 			cur_frm.alt_list_data = [...new Map(cur_frm.alt_list_data.reverse().map((m) => [m.alt_item, m])).values()];
 			cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data)
 		}
