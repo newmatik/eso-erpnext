@@ -1219,6 +1219,10 @@ def setup_bomline_alternative_items(items, bom, parent_item_code, current_item=N
 
         # Create or update alternatives
         for alt_item in item_alternatives:
+            # Prevent creating entries where item and alt_item are the same
+            if item == alt_item:
+                continue
+
             # Find qty from original items list
             qty = next((item_data['qty'] for item_data in items if item_data['alt_item'] == alt_item), 1.0)
 
@@ -1353,6 +1357,37 @@ def get_bomline_alternative_items(bom, amended_from, parent_item_code, current_i
 
 
 @frappe.whitelist()
+def cleanup_duplicate_alternative_items():
+    """
+    Clean up existing duplicate entries in BOM Line Alternative Item table
+    where item and alt_item are the same
+    """
+    # Find all duplicate entries
+    duplicate_entries = frappe.db.sql(
+        """
+        SELECT name, bom, item, alt_item
+        FROM `tabBOM Line Alternative Item`
+        WHERE item = alt_item
+        """, as_dict=1
+    )
+
+    if duplicate_entries:
+        # Delete duplicate entries
+        for entry in duplicate_entries:
+            frappe.db.sql(
+                """
+                DELETE FROM `tabBOM Line Alternative Item`
+                WHERE name = %s
+                """, entry['name']
+            )
+
+        frappe.db.commit()
+        return f"Cleaned up {len(duplicate_entries)} duplicate entries"
+    else:
+        return "No duplicate entries found"
+
+
+@frappe.whitelist()
 def duplicate_alt_items(bom, amended_from):
 	"""
 		Duplicate Alternative during amend process only the first time
@@ -1366,6 +1401,9 @@ def duplicate_alt_items(bom, amended_from):
 		""", (amended_from), as_dict=1)
 	for item in to_duplicate:
 		old_item = frappe.get_doc("BOM Line Alternative Item", item['name'])
+		# Skip if item and alt_item are the same to prevent duplicates
+		if old_item.item == old_item.alt_item:
+			continue
 		new_alt_item = frappe.new_doc("BOM Line Alternative Item")
 		new_alt_item.item = old_item.item
 		new_alt_item.qty = old_item.qty
