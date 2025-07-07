@@ -992,8 +992,8 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 			method: 'erpnext.manufacturing.doctype.bom.bom.remove_bomline_alt_items',
 			args: {
 				bom: cur_frm.doc.name,
-				parent_item_code: item_to_remove.alt_item,
-				alt_item_code: parent_item_code
+				parent_item_code: parent_item_code,
+				alt_item_code: item_to_remove.alt_item
 			},
 			callback: function(r) {
 				cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data);
