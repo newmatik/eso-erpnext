@@ -844,11 +844,11 @@ cur_frm.select_bomline_alternate_items = function(opts) {
             frappe.model.set_value('BOM Item', cdn, 'selected_alt_items', selected_items.join());
         }
     // Build already selected items list from current alt_list_data
-    var allready_selected = cur_frm.alt_list_data.map(item => item.alt_item);
+    var already_selected = cur_frm.alt_list_data.map(item => item.alt_item);
 
     // Always include the current item in the already selected list to prevent adding it
-    if (!allready_selected.includes(current_item)) {
-        allready_selected.push(current_item);
+    if (!already_selected.includes(current_item)) {
+        already_selected.push(current_item);
     }
 
 	const d = new frappe.ui.Dialog({
@@ -863,7 +863,7 @@ cur_frm.select_bomline_alternate_items = function(opts) {
                     // Use the already selected list (which already includes current item)
 					return {
 			           filters: [
-			   			['Item', 'item_code', 'not in', allready_selected] // not in!!!
+			   			['Item', 'item_code', 'not in', already_selected] // not in!!!
 			   		]
 			       }
 			    },
@@ -880,7 +880,7 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 								"qty": init_qty
 							});
 							// Update the already selected list
-							allready_selected = cur_frm.alt_list_data.map(item => item.alt_item);
+							already_selected = cur_frm.alt_list_data.map(item => item.alt_item);
 							cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data);
 							cur_frm.set_alt_items();
 						}
@@ -964,11 +964,11 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 			}
 
 			// Update the already selected list based on the new data
-			allready_selected = cur_frm.alt_list_data.map(item => item.alt_item);
+			already_selected = cur_frm.alt_list_data.map(item => item.alt_item);
 
 			// Always include the current item in the already selected list
-			if (!allready_selected.includes(current_item)) {
-				allready_selected.push(current_item);
+			if (!already_selected.includes(current_item)) {
+				already_selected.push(current_item);
 			}
 
 			// Do NOT add the anchor/original item here. Just render what the backend returns.
@@ -982,9 +982,9 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 		cur_frm.alt_list_data.splice(i, 1);
 
 		// Remove from already selected list
-		var index = allready_selected.indexOf(item_to_remove.alt_item);
+		var index = already_selected.indexOf(item_to_remove.alt_item);
 		if (index > -1) {
-			allready_selected.splice(index, 1);
+			already_selected.splice(index, 1);
 		}
 
 		// Delete from database - both directions
