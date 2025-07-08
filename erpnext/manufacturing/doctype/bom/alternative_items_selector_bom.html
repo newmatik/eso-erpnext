@@ -21,6 +21,7 @@
         </td>
 				<td>
             <button id="data-list-{{i}}" onclick="cur_frm.remove_row({{ i }})" type="button" class="btn btn-danger"><span class="fa fa-trash-o"></button>
+            <button id="data-list-{{i}}" onclick="cur_frm.select_row({{ i }})" type="button" class="btn btn-success"><span class="fa fa-check-square-o"></button>
         </td>
 			  </tr>
 		  {% } %}

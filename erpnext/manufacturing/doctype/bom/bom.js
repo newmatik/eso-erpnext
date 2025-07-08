@@ -763,51 +763,7 @@ frappe.ui.form.on("BOM Item", "setup_alt_item_btn", function(frm, cdt, cdn) {
 	}
 });
 
-frappe.ui.form.on("BOM Item", "switch_to_alt", function(frm, cdt, cdn) {
-	var d = locals[cdt][cdn];
-	// Fallback: find the original_item from any other row if not set
-	let original_item = d.original_item;
-	if (!original_item) {
-		// Try to find from other BOM Items in the same parent
-		let items = frm.doc.items || [];
-		let found = items.find(row => row.original_item && row.item_code !== d.item_code);
-		if (found) {
-			original_item = found.original_item;
-		} else {
-			original_item = d.item_code; // fallback, but this is not ideal
-		}
-	}
 
-	// Determine the anchor item - use the original item if it still exists in the BOM,
-	// otherwise use the current item as the anchor
-	let anchor_item = original_item;
-	if (original_item && original_item !== d.item_code) {
-		// Check if the original item still exists in the BOM
-		let original_item_exists = false;
-		if (frm.doc.items) {
-			original_item_exists = frm.doc.items.some(item =>
-				item.item_code === original_item && !item.__deleted
-			);
-		}
-		// If original item doesn't exist in BOM, use current item as anchor
-		if (!original_item_exists) {
-			anchor_item = d.item_code;
-		}
-	}
-
-	cur_frm.select_bomline_alternate_items({
-		frm: frm,
-		cdn: cdn,
-		cdt: cdt,
-		current_item: d.item_code,
-		item_code: anchor_item,
-		has_alternatives: d.has_alternatives,
-		bom: d.parent,
-		amended_from: cur_frm.doc.amended_from || null,
-		parent_d: d.parent,
-		init_qty: d.qty
-	});
-});
 
 cur_frm.select_bomline_alternate_items = function(opts) {
 	const parent_item_code = opts.item_code;
@@ -976,6 +932,28 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 			cur_frm.set_alt_items()
 		}
 	})
+
+	cur_frm.select_row = function(i){
+		var selected_item = cur_frm.alt_list_data[i].alt_item;
+		const row = locals[cdt][cdn];
+		frappe.call({
+			method: 'newmatik.custom_hooks.bom.get_selected_alternative_item',
+			args: {
+                bom_item: row,
+                original_item: opts.item_code,
+				bom: cur_frm.doc.name,
+				item_code: selected_item,
+                qty: row.qty,
+                current_item: current_item
+			},
+			callback: function(r){
+                cur_frm.refresh();
+                cur_frm.reload_doc();
+			}
+		})
+
+		d.hide()
+	}
 	cur_frm.remove_row = function(i){
 		// remove a row
 		var item_to_remove = cur_frm.alt_list_data[i];
