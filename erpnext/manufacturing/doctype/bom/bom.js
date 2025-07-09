@@ -833,7 +833,8 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 						if (!already_exists) {
 							cur_frm.alt_list_data.push({
 								"alt_item": item_code,
-								"qty": init_qty
+								"qty": init_qty,
+								"is_new": true
 							});
 							// Update the already selected list
 							already_selected = cur_frm.alt_list_data.map(item => item.alt_item);
@@ -940,13 +941,17 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 			method: 'newmatik.custom_hooks.bom.get_selected_alternative_item',
 			args: {
                 bom_item: row,
-                original_item: opts.item_code,
 				bom: cur_frm.doc.name,
 				item_code: selected_item,
                 qty: row.qty,
-                current_item: current_item
+				items: JSON.stringify(cur_frm.alt_list_data),
+                current_item: current_item,
 			},
 			callback: function(r){
+                // Mark as not new
+                cur_frm.alt_list_data[i].is_new = false;
+                cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data);
+                cur_frm.set_alt_items();
                 cur_frm.refresh();
                 cur_frm.reload_doc();
 			}
@@ -957,6 +962,12 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 	cur_frm.remove_row = function(i){
 		// remove a row
 		var item_to_remove = cur_frm.alt_list_data[i];
+		// Build the group (all alt_items except the one being removed, plus the current item)
+		var group_items = cur_frm.alt_list_data
+			.filter((item, idx) => idx !== i)
+			.map(item => item.alt_item);
+		group_items.push(current_item); // ensure the current item is included
+
 		cur_frm.alt_list_data.splice(i, 1);
 
 		// Remove from already selected list
@@ -967,11 +978,11 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 
 		// Delete from database - both directions
 		frappe.call({
-			method: 'erpnext.manufacturing.doctype.bom.bom.remove_bomline_alt_items',
+			method: 'newmatik.custom_hooks.bom.remove_bomline_alt_items_bidirectional',
 			args: {
 				bom: cur_frm.doc.name,
-				parent_item_code: parent_item_code,
-				alt_item_code: item_to_remove.alt_item
+				removed_item: item_to_remove.alt_item,
+				group_items: JSON.stringify(group_items)
 			},
 			callback: function(r) {
 				cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data);

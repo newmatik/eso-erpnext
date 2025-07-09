@@ -21,7 +21,14 @@
         </td>
 				<td>
             <button id="data-list-{{i}}" onclick="cur_frm.remove_row({{ i }})" type="button" class="btn btn-danger"><span class="fa fa-trash-o"></button>
-            <button id="data-list-{{i}}" onclick="cur_frm.select_row({{ i }})" type="button" class="btn btn-success"><span class="fa fa-check-square-o"></button>
+            <button id="data-list-{{i}}"
+                    onclick="cur_frm.select_row({{ i }})"
+                    type="button"
+                    class="btn btn-success"
+                    title="Select this alternative item"
+                    {% if data[i].is_new %}disabled{% endif %}>
+                <span class="fa fa-check-square-o"></span>
+            </button>
         </td>
 			  </tr>
 		  {% } %}
