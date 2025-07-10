@@ -539,9 +539,9 @@ frappe.ui.form.on("Work Order Item", {
 			});
 		}
 	},
-
-	item_code: function(frm, cdt, cdn) {
-		let row = locals[cdt][cdn];
+	// function changing the quantity to 1 when using the switch alt item,
+	// item_code: function(frm, cdt, cdn) {
+	// 	let row = locals[cdt][cdn];
 
 	// 	if (row.item_code) {
 	// 		frappe.call({
@@ -615,14 +615,21 @@ cur_frm.select_workline_alternate_item = function(opts) {
 		},
 		callback:function(r){
 			cur_frm.alt_list_data =  r.message || [];
-			if (current_item_selection != item_code) {
-				cur_frm.alt_list_data.push({
-					'alt_item':item_code
-				})
-			}
+
+			// Remove the current item from the list
 			var current_item_selection_idx = cur_frm.alt_list_data.findIndex(item => item.alt_item === current_item_selection)
 			if (current_item_selection_idx != -1) {
 				cur_frm.alt_list_data.splice(current_item_selection_idx, 1)
+			}
+
+			// Always include the original item (item_code) unless it's the current item
+			if (current_item_selection !== item_code) {
+				var already_in_list = cur_frm.alt_list_data.find(item => item.alt_item === item_code);
+				if (!already_in_list) {
+					cur_frm.alt_list_data.unshift({
+						alt_item: item_code
+					});
+				}
 			}
 
 			cur_frm.alt_list_data = [...new Map(cur_frm.alt_list_data.reverse().map((m) => [m.alt_item, m])).values()];
