@@ -1168,95 +1168,109 @@ def get_children(doctype, parent=None, is_root=False, **filters):
 
 @frappe.whitelist()
 def setup_bomline_alternative_items(items, bom, parent_item_code, current_item=None):
-    """
-    Update related BOM Item and BOM Line Alternative Item
-    Creates alternative items for each possible combination to ensure proper display in BOMs and WOs
-    """
-    items = json.loads(items)
+	"""
+	Update related BOM Item and BOM Line Alternative Item
+	Creates alternative items for each possible combination to ensure proper display in BOMs and WOs
+	"""
+	items = json.loads(items)
 
-    # Check if the parent item still exists in the BOM
-    parent_item_exists = frappe.db.exists("BOM Item", {
-        "parent": bom,
-        "item_code": parent_item_code,
-        "docstatus": ["<", 2]  # Not cancelled
-    })
+	# Check if the parent item still exists in the BOM
+	parent_item_exists = frappe.db.exists("BOM Item", {
+		"parent": bom,
+		"item_code": parent_item_code,
+		"docstatus": ["<", 2]  # Not cancelled
+	})
 
-    # Check if there are any alternative relationships for this parent item
-    has_alternatives = len(items) > 0
+	# Check if there are any alternative relationships for this parent item
+	has_alternatives = len(items) > 0
 
-    # Get all possible items (parent + alternatives)
-    # Include parent if it exists OR if it has alternatives (was switched away from)
-    # AND if it's not the current item being used
-    all_items = []
-    # Always include the parent item to create proper bidirectional relationships
-    # The parent item should be included even if it's the same as current_item
-    if parent_item_exists or has_alternatives:
-        all_items.append(parent_item_code)
-    all_items.extend([item['alt_item'] for item in items])
+	# Get all possible items (parent + alternatives)
+	# Include parent if it exists OR if it has alternatives (was switched away from)
+	# AND if it's not the current item being used
+	all_items = []
+	# Always include the parent item to create proper bidirectional relationships
+	# The parent item should be included even if it's the same as current_item
+	if parent_item_exists or has_alternatives:
+		all_items.append(parent_item_code)
+	all_items.extend([item['alt_item'] for item in items])
 
-    # Create combinations for each item
-    for item in all_items:
-        # Get existing alternatives for this item
-        existing_alts = frappe.db.sql(
-            """
-            select name, alt_item
-            from `tabBOM Line Alternative Item`
-            where bom=%s and item=%s
-            """, (bom, item), as_dict=1)
+	# Create combinations for each item
+	for item in all_items:
+		# Get existing alternatives for this item
+		existing_alts = frappe.db.sql(
+			"""
+			select name, alt_item
+			from `tabBOM Line Alternative Item`
+			where bom=%s and item=%s
+			""", (bom, item), as_dict=1)
 
-        # Create list of alternatives for this item
-        # All other items become alternatives
-        item_alternatives = [alt_item for alt_item in all_items if alt_item != item]
+		# Create list of alternatives for this item
+		# All other items become alternatives
+		item_alternatives = [alt_item for alt_item in all_items if alt_item != item]
 
-        # Delete removed alternatives
-        to_delete = [alt['name'] for alt in existing_alts if alt['alt_item'] not in item_alternatives]
+		# Delete removed alternatives
+		to_delete = [alt['name'] for alt in existing_alts if alt['alt_item'] not in item_alternatives]
 
-        if to_delete:
-            frappe.db.delete(
-                "BOM Line Alternative Item",
-                {"name": ("in", tuple(to_delete))}
-            )
+		if to_delete:
+			frappe.db.delete(
+				"BOM Line Alternative Item",
+				{"name": ("in", tuple(to_delete))}
+			)
 
-        # Create or update alternatives
-        for alt_item in item_alternatives:
-            # Prevent creating entries where item and alt_item are the same
-            if item == alt_item:
-                continue
+		# Create or update alternatives
+		for alt_item in item_alternatives:
+			# Prevent creating entries where item and alt_item are the same
+			if item == alt_item:
+				continue
 
-            # Find qty from original items list
-            qty = next((item_data['qty'] for item_data in items if item_data['alt_item'] == alt_item), 1.0)
+			# Find qty from original items list
+			qty = None
+			for item_data in items:
+				if item_data['alt_item'] == alt_item:
+					qty = item_data['qty']
+					break
 
-            # Check if this combination already exists
-            existing = frappe.get_all('BOM Line Alternative Item',
-                filters={
-                    'bom': bom,
-                    'item': item,
-                    'alt_item': alt_item
-                })
+			# If qty not found in items list, get it from the current BOM item
+			if qty is None:
+				bom_item_qty = frappe.db.get_value("BOM Item", {
+					"parent": bom,
+					"item_code": parent_item_code,
+					"docstatus": ["<", 2]
+				}, "qty")
+				qty = bom_item_qty or 1
 
-            if existing:
-                # Update existing
-                d = frappe.get_doc("BOM Line Alternative Item", existing[0].name)
-                d.qty = qty
-            else:
-                # Create new
-                d = frappe.new_doc('BOM Line Alternative Item')
-                d.bom = bom
-                d.item = item
-                d.alt_item = alt_item
-                d.qty = qty
-            d.save()
 
-    # Return updated list of alternatives for the parent item
-    result = frappe.db.sql(
-        """
-        select alt_item, qty, name
-        from `tabBOM Line Alternative Item`
-        where bom=%s and item=%s
-        order by idx
-        """, (bom, parent_item_code), as_dict=1)
+			# Check if this combination already exists
+			existing = frappe.get_all('BOM Line Alternative Item',
+				filters={
+					'bom': bom,
+					'item': item,
+					'alt_item': alt_item
+				})
 
-    return result
+			if existing:
+				# Update existing
+				d = frappe.get_doc("BOM Line Alternative Item", existing[0].name)
+				d.qty = qty
+			else:
+				# Create new
+				d = frappe.new_doc('BOM Line Alternative Item')
+				d.bom = bom
+				d.item = item
+				d.alt_item = alt_item
+				d.qty = qty
+			d.save()
+
+	# Return updated list of alternatives for the parent item
+	result = frappe.db.sql(
+		"""
+		select alt_item, qty, name
+		from `tabBOM Line Alternative Item`
+		where bom=%s and item=%s
+		order by idx
+		""", (bom, parent_item_code), as_dict=1)
+
+	return result
 
 
 @frappe.whitelist()
@@ -1304,87 +1318,104 @@ def remove_bomline_alt_items(bom, parent_item_code, alt_item_code=None):
 
 @frappe.whitelist()
 def get_bomline_alternative_items(bom, amended_from, parent_item_code, current_item=None):
-    """
-    Return the full set of alternatives for the group anchored by the original item,
-    but do not include the anchor item as its own alternative.
-    """
-    anchor_item = parent_item_code
+	"""
+	Return the full set of alternatives for the group anchored by the original item,
+	but do not include the anchor item as its own alternative.
+	"""
+	anchor_item = parent_item_code
 
-    items_bom = frappe.db.sql(
-        """
-            select alt_item, name, FORMAT(qty, 2) as qty
-            from `tabBOM Line Alternative Item`
-            where bom=%s and item=%s
-        """, (bom, anchor_item), as_dict=1)
+	items_bom = frappe.db.sql(
+		"""
+			select alt_item, name, qty
+			from `tabBOM Line Alternative Item`
+			where bom=%s and item=%s
+		""", (bom, anchor_item), as_dict=1)
 
-    reverse_items = frappe.db.sql(
-        """
-            select item as alt_item, name, FORMAT(qty, 2) as qty
-            from `tabBOM Line Alternative Item`
-            where bom=%s and alt_item=%s
-        """, (bom, anchor_item), as_dict=1)
+	reverse_items = frappe.db.sql(
+		"""
+			select item as alt_item, name, qty
+			from `tabBOM Line Alternative Item`
+			where bom=%s and alt_item=%s
+		""", (bom, anchor_item), as_dict=1)
 
-    # Combine all unique alt_items (excluding the anchor/original item itself)
-    all_items_set = set()
-    for item in items_bom + reverse_items:
-        if item['alt_item'] != anchor_item:
-            all_items_set.add(item['alt_item'])
+	# Combine all unique alt_items (excluding the anchor/original item itself)
+	all_items_set = set()
+	for item in items_bom + reverse_items:
+		if item['alt_item'] != anchor_item:
+			all_items_set.add(item['alt_item'])
 
-    # Check if the anchor item still exists in the current BOM
-    anchor_item_exists = frappe.db.exists("BOM Item", {
-        "parent": bom,
-        "item_code": anchor_item,
-        "docstatus": ["<", 2]  # Not cancelled
-    })
+	# Check if the anchor item still exists in the current BOM
+	anchor_item_exists = frappe.db.exists("BOM Item", {
+		"parent": bom,
+		"item_code": anchor_item,
+		"docstatus": ["<", 2]  # Not cancelled
+	})
 
-    # Check if there are any alternative relationships for this anchor item
-    has_alternatives = len(all_items_set) > 0
+	# Check if there are any alternative relationships for this anchor item
+	has_alternatives = len(all_items_set) > 0
 
-    # Only build the list if there is at least one alternative
-    if all_items_set:
-        all_items = []
-        # Include the anchor item if:
-        # 1. It exists in the BOM, OR
-        # 2. It has alternatives (meaning it was switched away from, not deleted)
-        # 3. It's NOT the current item (you can't switch to what you're already using)
-        if (anchor_item_exists or has_alternatives) and anchor_item != current_item:
-            all_items.append({'alt_item': anchor_item, 'qty': '1.00', 'name': ''})
-        all_items += [{'alt_item': item, 'qty': '1.00', 'name': ''} for item in all_items_set]
-    else:
-        all_items = []
 
-    return all_items
+	# Only build the list if there is at least one alternative
+	if all_items_set:
+		all_items = []
+		# Include the anchor item if:
+		# 1. It exists in the BOM, OR
+		# 2. It has alternatives (meaning it was switched away from, not deleted)
+		# 3. It's NOT the current item (you can't switch to what you're already using)
+
+		for item in all_items_set:
+			quantity = frappe.db.get_value("BOM Line Alternative Item", {'bom': bom, 'item':current_item, 'alt_item': item}, 'qty')
+			# If quantity not found, get it from the original BOM item
+			if quantity is None:
+				quantity = frappe.db.get_value("BOM Item", {
+					"parent": bom,
+					"item_code": parent_item_code,
+					"docstatus": ["<", 2]
+				}, "qty") or 1
+			all_items.append({'alt_item': item, 'qty': quantity, 'name': ''})
+		if (anchor_item_exists or has_alternatives) and anchor_item != current_item:
+			# Get quantity for anchor item from BOM item
+			anchor_quantity = frappe.db.get_value("BOM Item", {
+				"parent": bom,
+				"item_code": anchor_item,
+				"docstatus": ["<", 2]
+			}, "qty") or 1
+			all_items.append({'alt_item': anchor_item, 'qty': anchor_quantity, 'name': ''})
+	else:
+		all_items = []
+
+	return all_items
 
 
 @frappe.whitelist()
 def cleanup_duplicate_alternative_items():
-    """
-    Clean up existing duplicate entries in BOM Line Alternative Item table
-    where item and alt_item are the same
-    """
-    # Find all duplicate entries
-    duplicate_entries = frappe.db.sql(
-        """
-        SELECT name, bom, item, alt_item
-        FROM `tabBOM Line Alternative Item`
-        WHERE item = alt_item
-        """, as_dict=1
-    )
+	"""
+	Clean up existing duplicate entries in BOM Line Alternative Item table
+	where item and alt_item are the same
+	"""
+	# Find all duplicate entries
+	duplicate_entries = frappe.db.sql(
+		"""
+		SELECT name, bom, item, alt_item
+		FROM `tabBOM Line Alternative Item`
+		WHERE item = alt_item
+		""", as_dict=1
+	)
 
-    if duplicate_entries:
-        # Delete duplicate entries
-        for entry in duplicate_entries:
-            frappe.db.sql(
-                """
-                DELETE FROM `tabBOM Line Alternative Item`
-                WHERE name = %s
-                """, entry['name']
-            )
+	if duplicate_entries:
+		# Delete duplicate entries
+		for entry in duplicate_entries:
+			frappe.db.sql(
+				"""
+				DELETE FROM `tabBOM Line Alternative Item`
+				WHERE name = %s
+				""", entry['name']
+			)
 
-        frappe.db.commit()
-        return f"Cleaned up {len(duplicate_entries)} duplicate entries"
-    else:
-        return "No duplicate entries found"
+		frappe.db.commit()
+		return f"Cleaned up {len(duplicate_entries)} duplicate entries"
+	else:
+		return "No duplicate entries found"
 
 
 @frappe.whitelist()
@@ -1397,7 +1428,7 @@ def duplicate_alt_items(bom, amended_from):
 		"""
 			select  name
 			from `tabBOM Line Alternative Item`
-		    where bom=%s order by idx
+			where bom=%s order by idx
 		""", (amended_from), as_dict=1)
 	for item in to_duplicate:
 		old_item = frappe.get_doc("BOM Line Alternative Item", item['name'])
