@@ -936,6 +936,7 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 
 	cur_frm.select_row = function(i){
 		var selected_item = cur_frm.alt_list_data[i].alt_item;
+		var selected_item_qty = cur_frm.alt_list_data[i].qty;
 		const row = locals[cdt][cdn];
 		frappe.call({
 			method: 'newmatik.custom_hooks.bom.get_selected_alternative_item',
@@ -943,7 +944,7 @@ cur_frm.select_bomline_alternate_items = function(opts) {
                 bom_item: row,
 				bom: cur_frm.doc.name,
 				item_code: selected_item,
-                qty: row.qty,
+                qty: selected_item_qty,
 				items: JSON.stringify(cur_frm.alt_list_data),
                 current_item: current_item,
 			},
