@@ -221,8 +221,7 @@
    "fieldname": "customer",
    "fieldtype": "Link",
    "label": "Customer",
-   "options": "Customer",
-   "reqd": 1
+   "options": "Customer"
   },
   {
    "default": "0",
@@ -400,7 +399,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2024-11-26 13:46:07.760867",
+ "modified": "2025-01-28 03:29:42.489697",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Dunning",

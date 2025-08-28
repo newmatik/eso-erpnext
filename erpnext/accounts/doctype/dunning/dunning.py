@@ -28,9 +28,8 @@ class Dunning(AccountsController):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
-		from frappe.types import DF
-
 		from erpnext.accounts.doctype.overdue_payment.overdue_payment import OverduePayment
+		from frappe.types import DF
 
 		address_display: DF.SmallText | None
 		amended_from: DF.Link | None
@@ -47,7 +46,7 @@ class Dunning(AccountsController):
 		conversion_rate: DF.Float
 		cost_center: DF.Link | None
 		currency: DF.Link | None
-		customer: DF.Link
+		customer: DF.Link | None
 		customer_address: DF.Link | None
 		customer_name: DF.Data | None
 		dunning_amount: DF.Currency

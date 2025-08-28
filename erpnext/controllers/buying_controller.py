@@ -925,8 +925,8 @@ class BuyingController(SubcontractingController):
 
 		if self.get("is_old_subcontracting_flow"):
 			validate_item_type(self, "is_sub_contracted_item", "subcontracted")
-		else:
-			validate_item_type(self, "is_purchase_item", "purchase")
+		# else:
+		# 	validate_item_type(self, "is_purchase_item", "purchase")
 
 
 def get_asset_item_details(asset_items):
