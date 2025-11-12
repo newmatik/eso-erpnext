@@ -775,6 +775,7 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 	const init_qty = opts.init_qty.toFixed(2);
 	const parent_d = opts.parent_d;
 	const amended_from = opts.amended_from;
+	const mode = opts.mode || 'setup'; // 'setup' or 'switch'
 
 	// headers for html rendering
 	var headers = [ __("Alternative Item"),  __("Qty"), __("")]
@@ -782,13 +783,33 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 	if(!cur_frm.alt_list_data){
 		cur_frm.alt_list_data = [];
 	}
+
 	cur_frm.render_alts_items = function(d, headers, data){
 		// render table of BOM Alternative Items
 		d.fields_dict.alt_items.$wrapper.html(
 			frappe.render_template('alternative_items_selector_bom',
-				{'header_columns': headers, 'data': cur_frm.alt_list_data}
+				{'header_columns': headers, 'data': cur_frm.alt_list_data, 'mode': mode}
 			)
-		)
+		);
+
+		// Hide/show elements based on mode
+		if (mode === 'switch') {
+			// Hide qty input fields and make them read-only text
+			d.fields_dict.alt_items.$wrapper.find('input[id^="data-qty-"]').each(function() {
+				var qtyValue = $(this).val();
+				$(this).replaceWith('<span>' + qtyValue + '</span>');
+			});
+
+			// Hide trash buttons
+			d.fields_dict.alt_items.$wrapper.find('button.btn-danger').hide();
+
+			// Show check buttons (they should already be visible, but ensure they're enabled)
+			d.fields_dict.alt_items.$wrapper.find('button.btn-success, button.btn-secondary').show().prop('disabled', false);
+		} else {
+			// Setup mode: show everything
+			d.fields_dict.alt_items.$wrapper.find('button.btn-danger').show();
+			d.fields_dict.alt_items.$wrapper.find('button.btn-success, button.btn-secondary').show();
+		}
 	}
 	cur_frm.set_alt_items = function(){
 		var selected_items = []
@@ -807,50 +828,58 @@ cur_frm.select_bomline_alternate_items = function(opts) {
         already_selected.push(current_item);
     }
 
+	// Build fields array conditionally based on mode
+	var dialog_fields = [];
+
+	// Only add "Add Item" field in setup mode
+	if (mode === 'setup') {
+		dialog_fields.push({
+			fieldtype:'Link',
+			fieldname:"add_regular_item",
+			options: 'Item',
+			label: __('Add Item'),
+			get_query: () => {
+                // Use the already selected list (which already includes current item)
+				return {
+		           filters: [
+		   			['Item', 'item_code', 'not in', already_selected] // not in!!!
+		   		]
+		       }
+		    },
+			onchange: function() {
+			  var item_code = this.get_value();
+
+			  if (item_code) {
+					// Check if item is already in the current list
+					var already_exists = cur_frm.alt_list_data.some(item => item.alt_item === item_code);
+
+					if (!already_exists) {
+						cur_frm.alt_list_data.push({
+							"alt_item": item_code,
+							"qty": init_qty,
+							"is_new": true
+						});
+						// Update the already selected list
+						already_selected = cur_frm.alt_list_data.map(item => item.alt_item);
+						cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data);
+						cur_frm.set_alt_items();
+					}
+			  }
+			}
+		});
+	}
+
+	// Always add the alt_items HTML field
+	dialog_fields.push({
+		fieldtype:'HTML',
+		fieldname:"alt_items",
+		label: __('Alternative Items'),
+	});
+
 	const d = new frappe.ui.Dialog({
 		title: __("Select Alternate Items:") + current_item,
-		fields: [
-			{
-				fieldtype:'Link',
-				fieldname:"add_regular_item",
-				options: 'Item',
-				label: __('Add Item'),
-				get_query: () => {
-                    // Use the already selected list (which already includes current item)
-					return {
-			           filters: [
-			   			['Item', 'item_code', 'not in', already_selected] // not in!!!
-			   		]
-			       }
-			    },
-				onchange: function() {
-				  var item_code = this.get_value();
-
-				  if (item_code) {
-						// Check if item is already in the current list
-						var already_exists = cur_frm.alt_list_data.some(item => item.alt_item === item_code);
-
-						if (!already_exists) {
-							cur_frm.alt_list_data.push({
-								"alt_item": item_code,
-								"qty": init_qty,
-								"is_new": true
-							});
-							// Update the already selected list
-							already_selected = cur_frm.alt_list_data.map(item => item.alt_item);
-							cur_frm.render_alts_items(d, headers, cur_frm.alt_list_data);
-							cur_frm.set_alt_items();
-						}
-				  }
-				}
-			},
-			{
-				fieldtype:'HTML',
-				fieldname:"alt_items",
-				label: __('Alternative Items'),
-			}
-		],
-		primary_action: function() {
+		fields: dialog_fields,
+		primary_action: mode === 'setup' ? function() {
 			// Safety: always use the true original item as anchor
 			let anchor_item = parent_item_code;
 			if (!anchor_item) {
@@ -897,8 +926,8 @@ cur_frm.select_bomline_alternate_items = function(opts) {
 				}
 			})
 			this.hide();
-		},
-		primary_action_label: __('Update')
+		} : undefined,
+		primary_action_label: mode === 'setup' ? __('Update') : undefined
 	});
 
 	frappe.call({
