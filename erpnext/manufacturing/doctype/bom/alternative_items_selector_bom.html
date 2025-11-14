@@ -19,16 +19,16 @@
                   onchange="cur_frm.update_qty({{ i }})"
                   type="number" step="0.01"/>
         </td>
+        {% if mode === 'switch' %}
+        <td>
+            <button id="data-list-{{i}}" onclick="cur_frm.select_row({{ i }})" type="button" class="btn btn-success"><span class="fa fa-check-square-o"></button>
+        </td>
+        {% endif %}
+        {% if mode === 'setup' %}
 				<td>
             <button id="data-list-{{i}}" onclick="cur_frm.remove_row({{ i }})" type="button" class="btn btn-danger"><span class="fa fa-trash-o"></button>
-            <button id="data-list-{{i}}"
-                    onclick="cur_frm.select_row({{ i }})"
-                    type="button"
-                    class="btn {% if data[i].is_new %}btn-secondary{% else %}btn-success{% endif %}"
-                    {% if data[i].is_new %}disabled{% endif %}>
-                <span class="fa fa-check-square-o"></span>
-            </button>
         </td>
+        {% endif %}
 			  </tr>
 		  {% } %}
 	  {% }  else { %}
