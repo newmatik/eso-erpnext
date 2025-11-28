@@ -507,39 +507,6 @@ class PurchaseReceipt(BuyingController):
 			frappe.db.get_value("Company", self.company, "enable_provisional_accounting_for_non_stock_items")
 		)
 
-		for d in self.get("items"):
-			warehouse_account = get_warehouse_account_v2([d.warehouse, self.supplier_warehouse, d.from_warehouse])
-			if d.item_code in stock_items and flt(d.valuation_rate) and flt(d.qty):
-				if warehouse_account.get(d.warehouse):
-					stock_value_diff = frappe.db.get_value(
-						"Stock Ledger Entry",
-						{
-							"voucher_type": "Purchase Receipt",
-							"voucher_no": self.name,
-							"voucher_detail_no": d.name,
-							"warehouse": d.warehouse,
-							"is_cancelled": 0,
-						},
-						"stock_value_difference",
-					)
-
-					warehouse_account_name = warehouse_account[d.warehouse]["account"]
-					warehouse_account_currency = warehouse_account[d.warehouse]["account_currency"]
-					supplier_warehouse_account = warehouse_account.get(self.supplier_warehouse, {}).get("account")
-					supplier_warehouse_account_currency = warehouse_account.get(self.supplier_warehouse, {}).get(
-						"account_currency"
-					)
-					remarks = self.get("remarks") or _("Accounting Entry for Stock")
-
-					# If PR is sub-contracted and fg item rate is zero
-					# in that case if account for source and target warehouse are same,
-					# then GL entries should not be posted
-					if (
-						flt(stock_value_diff) == flt(d.rm_supp_cost)
-						and warehouse_account.get(self.supplier_warehouse)
-						and warehouse_account_name == supplier_warehouse_account
-					):
-						continue
 		exchange_rate_map, net_rate_map = get_purchase_document_details(self)
 
 		def validate_account(account_type):

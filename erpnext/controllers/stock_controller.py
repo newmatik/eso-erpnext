@@ -24,7 +24,7 @@ from erpnext.controllers.sales_and_purchase_return import (
 )
 from erpnext.setup.doctype.brand.brand import get_brand_defaults
 from erpnext.setup.doctype.item_group.item_group import get_item_group_defaults
-from erpnext.stock import get_warehouse_account_map, get_warehouse_account_v2
+from erpnext.stock import get_warehouse_account_map
 from erpnext.stock.doctype.batch.batch import get_batch_qty
 from erpnext.stock.doctype.inventory_dimension.inventory_dimension import (
 	get_evaluated_inventory_dimension,
@@ -270,12 +270,12 @@ class StockController(AccountsController):
 			or provisional_accounting_for_non_stock_items
 			or is_asset_pr
 		):
-			# warehouse_account = get_warehouse_account_map(self.company)
+			warehouse_account = get_warehouse_account_map(self.company)
 
 			if self.docstatus == 1:
 				if not gl_entries:
 					gl_entries = (
-						self.get_gl_entries({}, via_landed_cost_voucher)
+						self.get_gl_entries(warehouse_account, via_landed_cost_voucher)
 						if self.doctype == "Purchase Receipt"
 						else self.get_gl_entries(inventory_account_map)
 					)
@@ -691,8 +691,8 @@ class StockController(AccountsController):
 	def get_gl_entries(
 		self, inventory_account_map=None, default_expense_account=None, default_cost_center=None
 	):
-		# if not warehouse_account:
-		# 	warehouse_account = get_warehouse_account_map(self.company)
+		if not warehouse_account:
+			warehouse_account = get_warehouse_account_map(self.company)
 
 		sle_map = self.get_stock_ledger_details()
 		voucher_details = self.get_voucher_details(default_expense_account, default_cost_center, sle_map)
@@ -705,9 +705,6 @@ class StockController(AccountsController):
 			sle_rounding_diff = 0.0
 			if sle_list:
 				for sle in sle_list:
-
-					warehouse_account = get_warehouse_account_v2([sle.warehouse, item_row.get("target_warehouse"), item_row.get("warehouse")])
-					# print(warehouse_account)
 					_inv_dict = self.get_inventory_account_dict(sle, inventory_account_map)
 
 					if _inv_dict.get("account"):
@@ -785,7 +782,6 @@ class StockController(AccountsController):
 							"Please set default cost of goods sold account in company {0} for booking rounding gain and loss during stock transfer"
 						).format(frappe.bold(self.company))
 					)
-
 
 				gl_list.append(
 					self.get_gl_dict(

@@ -38,7 +38,7 @@ from erpnext.assets.doctype.asset_category.asset_category import get_asset_categ
 from erpnext.buying.utils import check_on_hold_or_closed_status
 from erpnext.controllers.accounts_controller import merge_taxes, validate_account_head
 from erpnext.controllers.buying_controller import BuyingController
-from erpnext.stock import get_warehouse_account_map, get_warehouse_account_v2
+from erpnext.stock import get_warehouse_account_map
 from erpnext.stock.doctype.purchase_receipt.purchase_receipt import (
 	update_billed_amount_based_on_po,
 )
@@ -468,8 +468,8 @@ class PurchaseInvoice(BuyingController):
 		if self.update_stock:
 			self.validate_item_code()
 			self.validate_warehouse(for_validate)
-			# if auto_accounting_for_stock:
-			# 	warehouse_account = get_warehouse_account_map(self.company)
+			if auto_accounting_for_stock:
+				warehouse_account = get_warehouse_account_map(self.company)
 
 		for item in self.get("items"):
 			# in case of auto inventory accounting,
@@ -485,7 +485,6 @@ class PurchaseInvoice(BuyingController):
 					or not frappe.db.get_value("Purchase Order Item", item.po_detail, "delivered_by_supplier")
 				)
 			):
-				warehouse_account = get_warehouse_account_v2([item.warehouse, ])
 				if self.update_stock and item.warehouse and (not item.from_warehouse):
 					_inv_dict = self.get_inventory_account_dict(item, inventory_account_map)
 
@@ -951,8 +950,8 @@ class PurchaseInvoice(BuyingController):
 	def make_item_gl_entries(self, gl_entries):
 		# item gl entries
 		stock_items = self.get_stock_items()
-		# if self.update_stock and self.auto_accounting_for_stock:
-		# 	warehouse_account = get_warehouse_account_map(self.company)
+		if self.update_stock and self.auto_accounting_for_stock:
+			warehouse_account = get_warehouse_account_map(self.company)
 
 		landed_cost_entries = self.get_item_account_wise_lcv_entries()
 
@@ -1000,8 +999,6 @@ class PurchaseInvoice(BuyingController):
 					warehouse_debit_amount = self.make_stock_adjustment_entry(
 						gl_entries, item, voucher_wise_stock_value, account_currency
 					)
-
-					warehouse_account = get_warehouse_account_v2([item.warehouse, item.from_warehouse, self.supplier_warehouse])
 
 					if item.from_warehouse:
 						_inv_dict = self.get_inventory_account_dict(item, inventory_account_map)
