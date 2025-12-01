@@ -499,6 +499,7 @@
    "print_hide": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "address_display",
    "fieldtype": "Small Text",
    "hide_days": 1,
@@ -507,6 +508,7 @@
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "contact_person",
    "fieldtype": "Link",
    "hide_days": 1,
@@ -517,6 +519,7 @@
    "print_hide": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "contact_display",
    "fieldtype": "Small Text",
    "hide_days": 1,
@@ -525,6 +528,7 @@
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "contact_mobile",
    "fieldtype": "Small Text",
    "hidden": 1,
@@ -535,6 +539,7 @@
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "contact_email",
    "fieldtype": "Data",
    "hidden": 1,
@@ -546,6 +551,7 @@
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "territory",
    "fieldtype": "Link",
    "hide_days": 1,
