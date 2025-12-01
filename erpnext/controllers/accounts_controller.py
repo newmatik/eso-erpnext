@@ -3649,6 +3649,16 @@ def get_supplier_block_status(party_name):
 
 
 def set_child_tax_template_and_map(item, child_item, parent_doc):
+	if parent_doc.doctype == 'Delivery Note':
+		parent_doc.transaction_date = parent_doc.posting_date
+
+	args = {
+		"item_code": item.item_code,
+		"posting_date": parent_doc.transaction_date,
+		"tax_category": parent_doc.get("tax_category"),
+		"company": parent_doc.get("company"),
+		"base_net_rate": item.get("base_net_rate"),
+	}
 	ctx = ItemDetailsCtx(
 		{
 			"item_code": item.item_code,
@@ -3705,7 +3715,7 @@ def set_order_defaults(parent_doctype, parent_doctype_name, child_doctype, child
 	child_item = frappe.new_doc(child_doctype, parent_doc=p_doc, parentfield=child_docname)
 	item = frappe.get_doc("Item", trans_item.get("item_code"))
 
-	
+
 
 
 	for field in ("item_code", "item_name", "description", "item_group"):
@@ -3721,7 +3731,7 @@ def set_order_defaults(parent_doctype, parent_doctype_name, child_doctype, child
 
 	if parent_doctype == 'Sales Order':
 		child_item.reqd_by_date = trans_item.get('reqd_by_date') or p_doc.reqd_by_date
-		
+
 		# get customer reference code
 		customer_items_list = get_customer_item_list(item.name, p_doc.customer_name)
 		if customer_items_list:
@@ -3800,12 +3810,18 @@ def update_bin_on_delete(row, doctype):
 
 	if doctype == "Sales Order":
 		qty_dict["reserved_qty"] = get_reserved_qty(row.item_code, row.warehouse)
+	elif doctype == "Delivery Note":
+		sle = frappe.db.get_value("Stock Ledger Entry", filters={'voucher_detail_no': row.name})
+		if sle:
+			sle_doc = frappe.get_doc("Stock Ledger Entry", sle)
+			if sle_doc:
+				sle_doc.cancel()
+				sle_doc.delete()
 	else:
 		if row.material_request_item:
 			qty_dict["indented_qty"] = get_indented_qty(row.item_code, row.warehouse)
 
 		qty_dict["ordered_qty"] = get_ordered_qty(row.item_code, row.warehouse)
-
 	if row.warehouse:
 		update_bin_qty(row.item_code, row.warehouse, qty_dict)
 
@@ -3889,7 +3905,7 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 			)
 
 	def get_new_child_item(item_row):
-		child_doctype = parent_doctype + " Item" if parent_doctype == "Purchase Order" else "Blanket Order Item"
+		child_doctype = parent_doctype + " Item" if parent_doctype == "Purchase Order" else "Delivery Note Item" if parent_doctype == "Delivery Note" else "Blanket Order Item"
 		return set_order_defaults(parent_doctype, parent_doctype_name, child_doctype, child_docname, item_row)
 
 	def is_allowed_zero_qty():
@@ -4030,6 +4046,7 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 
 			if parent_doctype == "Sales Order":
 				prev_date, new_date = child_item.get("delivery_date"), d.get("delivery_date")
+				reqd_prev_date, reqd_new_date = child_item.get("reqd_by_date"), d.get("reqd_by_date")
 			elif parent_doctype == "Purchase Order":
 				prev_date, new_date = child_item.get("schedule_date"), d.get("schedule_date")
 
@@ -4039,13 +4056,21 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 			qty_unchanged = prev_qty == new_qty
 			fg_qty_unchanged = prev_fg_qty == new_fg_qty
 			uom_unchanged = prev_uom == new_uom
+			idx_unchanged = child_item.idx == d.get("idx")
 			conversion_factor_unchanged = prev_con_fac == new_con_fac
 			any_conversion_factor_changed |= not conversion_factor_unchanged
+
 			date_unchanged = (
 				(prev_date == getdate(new_date) if prev_date and new_date else False)
 				if parent_doctype not in ["Quotation", "Supplier Quotation"]
 				else None
 			)  # in case of delivery note etc
+
+
+			if parent_doctype == "Sales Order":
+				reqd_by_date_unchanged = (
+					reqd_prev_date == getdate(reqd_new_date) if reqd_prev_date and reqd_new_date else False
+				)
 			if (
 				rate_unchanged
 				and qty_unchanged
@@ -4053,7 +4078,8 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 				and conversion_factor_unchanged
 				and uom_unchanged
 				and date_unchanged
-				and description_unchanged
+				and reqd_by_date_unchanged
+				and idx_unchanged
 			):
 				continue
 
@@ -4103,6 +4129,9 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 		# else:
 		child_item.rate = flt(d.get("rate"))
 
+		if d.get('idx'):
+			child_item.idx = d.get('idx')
+
 		if d.get("conversion_factor"):
 			if child_item.stock_uom == child_item.uom:
 				child_item.conversion_factor = 1
@@ -4127,8 +4156,16 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 		if d.get("delivery_date") and parent_doctype == "Sales Order":
 			child_item.delivery_date = d.get("delivery_date")
 
+		if d.get("reqd_by_date") and parent_doctype == "Sales Order":
+			child_item.reqd_by_date = d.get("reqd_by_date")
+
 		if d.get("schedule_date") and parent_doctype == "Purchase Order":
 			child_item.schedule_date = d.get("schedule_date")
+		if d.get("expected_delivery_date") and parent_doctype == "Purchase Order":
+			child_item.expected_delivery_date = d.get("expected_delivery_date")
+
+		if d.get("weight_kg") and parent_doctype == "Delivery Note":
+			child_item.weight_kg = d.get("weight_kg")
 
 		if d.get("bom_no") and parent_doctype == "Sales Order":
 			child_item.bom_no = d.get("bom_no")
@@ -4175,8 +4212,9 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 		frappe.get_cached_doc("Authorization Control").validate_approving_authority(
 			parent.doctype, parent.company, parent.base_grand_total
 		)
+		if parent_doctype != "Delivery Note":
+			parent.set_payment_schedule()
 
-		parent.set_payment_schedule()
 		if parent_doctype == "Purchase Order":
 			parent.validate_minimum_order_qty()
 			parent.validate_budget()
@@ -4227,11 +4265,12 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 	parent.reload()
 	validate_workflow_conditions(parent)
 
-	if parent_doctype != "Blanket Order":
+	if parent_doctype != "Blanket Order" and parent_doctype != 'Delivery Note':
 		parent.update_blanket_order()
 		parent.update_billing_percentage()
 		parent.set_status()
-
+	elif parent_doctype == "Delivery Note":
+		parent.save()
 	parent.validate_uom_is_integer("uom", "qty")
 	parent.validate_uom_is_integer("stock_uom", "stock_qty")
 

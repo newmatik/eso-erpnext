@@ -1131,21 +1131,16 @@ def update_billed_amount_based_on_po(po_details, update_modified=True, pr_doc=No
 		billed_amt_against_pr = flt(pr_items_billed_amount.get(pr_item.name, 0))
 
 		# Distribute billed amount directly against PO between PRs based on FIFO
-		if billed_amt_against_po and billed_amt_against_pr < pr_item.amount:
-			if not billed_amt_against_pr and billed_qty_against_po and billed_qty_against_po > pr_item.qty:
-				billed_amt_against_pr = flt(flt(billed_amt_against_po) * flt(pr_item.qty)) / flt(
-					billed_qty_against_po
-				)
+		if billed_against_po and billed_amt_against_pr < pr_item.amount:
+			pending_to_bill = flt(pr_item.amount) - billed_amt_against_pr
+			if pending_to_bill <= billed_against_po:
+				billed_amt_against_pr += pending_to_bill
+				billed_against_po -= pending_to_bill
 			else:
-				pending_to_bill = flt(pr_item.amount) - billed_amt_against_pr
-				if pending_to_bill <= billed_amt_against_po:
-					billed_amt_against_pr += pending_to_bill
-					billed_amt_against_po -= pending_to_bill
-				else:
-					billed_amt_against_pr += billed_amt_against_po
-					billed_amt_against_po = 0
+				billed_amt_against_pr += billed_against_po
+				billed_against_po = 0
 
-				po_billed_amt_details[pr_item.purchase_order_item]["billed_amt"] = billed_amt_against_po
+		po_billed_amt_details[pr_item.purchase_order_item] = billed_against_po
 
 		if pr_item.billed_amt != billed_amt_against_pr:
 			# update existing doc if possible

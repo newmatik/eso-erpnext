@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_import": 1,
+ "allow_rename": 1,
  "autoname": "field:order_lost_reason",
  "creation": "2013-01-10 16:34:24",
  "doctype": "DocType",
