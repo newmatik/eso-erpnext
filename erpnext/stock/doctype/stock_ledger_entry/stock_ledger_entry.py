@@ -88,6 +88,8 @@ class StockLedgerEntry(Document):
 		self.flags.ignore_submit_comment = True
 		from erpnext.stock.utils import validate_disabled_warehouse, validate_warehouse_company
 
+		self.batch_no = self.batch_no
+
 		self.set_posting_datetime()
 		self.validate_mandatory()
 		self.validate_batch()

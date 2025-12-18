@@ -1585,8 +1585,8 @@ def repost_gle_for_stock_vouchers(
 	if not stock_vouchers:
 		return
 
-	if not warehouse_account:
-		warehouse_account = get_warehouse_account_map(company)
+	# if not warehouse_account:
+	# 	warehouse_account = get_warehouse_account_map(company)
 
 	stock_vouchers = sort_stock_vouchers_by_posting_date(stock_vouchers, company=company)
 	if repost_doc and repost_doc.gl_reposting_index:

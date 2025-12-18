@@ -1048,6 +1048,9 @@ erpnext.selling.SalesOrderController = class SalesOrderController extends erpnex
 						}
 
 						if (frappe.model.can_create("Work Order")) {
+
+                        // changed for newmatik process.
+						// this.frm.add_custom_button(
 								__("Work Order"),
 								() => this.make_work_order(),
 								__("Create")

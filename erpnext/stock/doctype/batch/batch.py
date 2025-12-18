@@ -116,7 +116,6 @@ class Batch(Document):
 
 	def autoname(self):
 		"""Generate random ID for batch if not specified"""
-
 		if self.batch_id:
 			self.name = self.batch_id
 			return
