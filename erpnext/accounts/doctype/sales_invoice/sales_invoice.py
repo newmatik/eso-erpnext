@@ -2781,24 +2781,35 @@ def create_dunning(source_name, target_doc=None, ignore_permissions=False):
 
 		target.validate()
 
-	return get_mapped_doc(
-		from_doctype="Sales Invoice",
-		from_docname=source_name,
-		target_doc=target_doc,
-		table_maps={
+	doc = get_mapped_doc(
+		"Sales Invoice",
+		source_name,
+		{
 			"Sales Invoice": {
 				"doctype": "Dunning",
-				"field_map": {"customer_address": "customer_address", "parent": "sales_invoice"},
-			},
-			"Payment Schedule": {
-				"doctype": "Overdue Payment",
-				"field_map": {"name": "payment_schedule", "parent": "sales_invoice"},
-				"condition": lambda doc: doc.outstanding > 0 and getdate(doc.due_date) < getdate(),
-			},
+				"field_map": {
+					"customer_address": "customer_address",
+					"name": "sales_invoice",
+				},
+				"table_map": {
+					"Payment Schedule": {
+						"doctype": "Overdue Payment",
+						"field_map": {
+							"name": "payment_schedule",
+							"parent": "sales_invoice",
+						},
+						"condition": lambda doc: doc.outstanding > 0 and getdate(doc.due_date) < getdate(),
+					}
+				},
+			}
 		},
+		target_doc,
 		postprocess=postprocess_dunning,
 		ignore_permissions=ignore_permissions,
 	)
+
+	return doc
+
 
 
 def check_if_return_invoice_linked_with_payment_entry(self):

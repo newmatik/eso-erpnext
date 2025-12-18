@@ -21,7 +21,7 @@ from erpnext.controllers.sales_and_purchase_return import (
 	filter_serial_batches,
 	make_serial_batch_bundle_for_return,
 )
-from erpnext.stock import get_warehouse_account_map
+from erpnext.stock import get_warehouse_account_map, get_warehouse_account_v2
 from erpnext.stock.doctype.inventory_dimension.inventory_dimension import (
 	get_evaluated_inventory_dimension,
 )
@@ -141,15 +141,16 @@ class StockController(AccountsController):
 			or provisional_accounting_for_non_stock_items
 			or is_asset_pr
 		):
-			warehouse_account = get_warehouse_account_map(self.company)
+			# warehouse_account = get_warehouse_account_map(self.company)
 
 			if self.docstatus == 1:
 				if not gl_entries:
-					gl_entries = (
-						self.get_gl_entries(warehouse_account, via_landed_cost_voucher)
-						if self.doctype == "Purchase Receipt"
-						else self.get_gl_entries(warehouse_account)
-					)
+					# gl_entries = (
+					# 	self.get_gl_entries(warehouse_account, via_landed_cost_voucher)
+					# 	if self.doctype == "Purchase Receipt"
+					# 	else self.get_gl_entries(warehouse_account)
+					# )
+					gl_entries = self.get_gl_entries({})
 				make_gl_entries(gl_entries, from_repost=from_repost)
 
 	def validate_serialized_batch(self):
@@ -554,8 +555,8 @@ class StockController(AccountsController):
 				row.use_serial_batch_fields = 1
 
 	def get_gl_entries(self, warehouse_account=None, default_expense_account=None, default_cost_center=None):
-		if not warehouse_account:
-			warehouse_account = get_warehouse_account_map(self.company)
+		# if not warehouse_account:
+			# warehouse_account = get_warehouse_account_map(self.company)
 
 		sle_map = self.get_stock_ledger_details()
 		voucher_details = self.get_voucher_details(default_expense_account, default_cost_center, sle_map)
@@ -568,9 +569,13 @@ class StockController(AccountsController):
 			sle_rounding_diff = 0.0
 			if sle_list:
 				for sle in sle_list:
-					if warehouse_account.get(sle.warehouse):
-						# from warehouse account
+					# Always try to get warehouse account, even if not in passed warehouse_account dict
+					warehouse_account_data = get_warehouse_account_v2([sle.warehouse, item_row.get("target_warehouse"), item_row.get("warehouse")])
 
+					# Check if the warehouse has an account
+					if warehouse_account_data.get(sle.warehouse) and warehouse_account_data[sle.warehouse].get("account"):
+						# Update warehouse_account with fetched data
+						warehouse_account.update(warehouse_account_data)
 						sle_rounding_diff += flt(sle.stock_value_difference)
 
 						self.check_expense_account(item_row)
@@ -669,6 +674,8 @@ class StockController(AccountsController):
 
 		if warehouse_with_no_account:
 			for wh in warehouse_with_no_account:
+				print(wh,'HELLO?')
+				print(frappe.get_cached_value("Warehouse", wh, "company"),'HELLO?')
 				if frappe.get_cached_value("Warehouse", wh, "company"):
 					frappe.throw(
 						_(
