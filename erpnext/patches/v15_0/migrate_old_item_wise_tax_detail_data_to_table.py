@@ -92,8 +92,12 @@ def get_items_for_docs(parents, doctype):
 	item = frappe.qb.DocType(f"{doctype} Item")
 	additional_fields = []
 
+	# Some older databases may not yet have `apply_tds` on purchase item tables.
+	# Only include it in the SELECT if the column exists.
 	if doctype in TAX_WITHHOLDING_DOCS:
-		additional_fields.append(item.apply_tds)
+		item_table = f"{doctype} Item"
+		if "apply_tds" in frappe.db.get_table_columns(item_table):
+			additional_fields.append(item.apply_tds)
 
 	return (
 		frappe.qb.from_(item)
@@ -116,8 +120,11 @@ def get_items_for_docs(parents, doctype):
 def get_doc_details(parents, doctype):
 	inv = frappe.qb.DocType(doctype)
 	additional_fields = []
+	# Some older databases may not yet have `base_tax_withholding_net_total` on
+	# Purchase documents. Only include it in the SELECT if the column exists.
 	if doctype in TAX_WITHHOLDING_DOCS:
-		additional_fields.append(inv.base_tax_withholding_net_total)
+		if "base_tax_withholding_net_total" in frappe.db.get_table_columns(doctype):
+			additional_fields.append(inv.base_tax_withholding_net_total)
 
 	return (
 		frappe.qb.from_(inv)

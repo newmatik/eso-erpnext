@@ -62,10 +62,19 @@ def execute():
 
 
 def get_accounts_closing_date():
-	"""Get the date when accounts were frozen/closed"""
-	accounts_frozen_till = frappe.db.get_single_value(
-		"Accounts Settings", "acc_frozen_upto"
-	)  # always returns datetime.date
+	"""Get the date when accounts were frozen/closed.
+
+	This patch may run on databases where older fields like
+	`acc_frozen_upto` have already been removed. In that case,
+	we fall back to using only the latest Period Closing Voucher
+	or return ``None`` so the patch can still proceed.
+	"""
+
+	try:
+		accounts_frozen_till = frappe.db.get_single_value("Accounts Settings", "acc_frozen_upto")
+	except Exception:
+		# Field might not exist on this site/version; treat as no freeze date
+		accounts_frozen_till = None
 
 	period_closing_date = frappe.db.get_value(
 		"Period Closing Voucher", {"docstatus": 1}, "period_end_date", order_by="period_end_date desc"
