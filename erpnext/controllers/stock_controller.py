@@ -693,6 +693,10 @@ class StockController(AccountsController):
 		# if not warehouse_account:
 			# warehouse_account = get_warehouse_account_map(self.company)
 
+		# Map of inventory accounts either by item or by warehouse, depending on
+		# company settings. Used by get_inventory_account_dict below.
+		inventory_account_map = self.get_inventory_account_map()
+
 		sle_map = self.get_stock_ledger_details()
 		voucher_details = self.get_voucher_details(default_expense_account, default_cost_center, sle_map)
 
@@ -711,6 +715,8 @@ class StockController(AccountsController):
 					if warehouse_account_data.get(sle.warehouse) and warehouse_account_data[sle.warehouse].get("account"):
 						# Update warehouse_account with fetched data
 						warehouse_account.update(warehouse_account_data)
+						# Inventory account for this SLE (stock account and currency)
+						_inv_dict = warehouse_account_data.get(sle.warehouse)
 						sle_rounding_diff += flt(sle.stock_value_difference)
 
 						self.check_expense_account(item_row)
