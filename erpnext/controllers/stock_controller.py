@@ -823,8 +823,6 @@ class StockController(AccountsController):
 
 		if warehouse_with_no_account:
 			for wh in warehouse_with_no_account:
-				print(wh,'HELLO?')
-				print(frappe.get_cached_value("Warehouse", wh, "company"),'HELLO?')
 				if frappe.get_cached_value("Warehouse", wh, "company"):
 					frappe.throw(
 						_(

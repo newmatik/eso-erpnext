@@ -779,10 +779,14 @@ erpnext.work_order = {
 
 					let transfer_extra_materials_percentage =
 						frm.doc.__onload?.transfer_extra_materials_percentage;
+
 					let allowed_qty = 0;
 					let transfer_extra_materials = false;
+
 					if (!pending_to_transfer && transfer_extra_materials_percentage) {
-						allowed_qty = frm.doc.qty + (transfer_extra_materials_percentage / 100) * frm.doc.qty;
+						allowed_qty =
+							frm.doc.qty +
+							(transfer_extra_materials_percentage / 100) * frm.doc.qty;
 
 						if (allowed_qty > frm.doc.material_transferred_for_manufacturing) {
 							transfer_extra_materials = true;
@@ -791,21 +795,21 @@ erpnext.work_order = {
 
 					if (pending_to_transfer && frm.doc.status != "Stopped") {
 						frm.has_start_btn = true;
+
 						frm.add_custom_button(__("Create Pick List"), function () {
 							erpnext.work_order.create_pick_list(frm);
 						});
 
-						var start_btn = frm.add_custom_button(__("Start"), function () {
+						let start_btn = frm.add_custom_button(__("Start"), function () {
 							erpnext.work_order.make_se(frm, "Material Transfer for Manufacture");
 						});
 						start_btn.addClass("btn-primary");
+
 					} else if (transfer_extra_materials && allowed_qty) {
 						let qty =
 							allowed_qty -
-							flt(
-								flt(frm.doc.material_transferred_for_manufacturing) +
-									flt(frm.doc.additional_transferred_qty)
-							);
+							(flt(frm.doc.material_transferred_for_manufacturing) +
+							 flt(frm.doc.additional_transferred_qty));
 
 						if (qty > 0) {
 							frm.add_custom_button(
@@ -819,7 +823,7 @@ erpnext.work_order = {
 												"erpnext.manufacturing.doctype.work_order.work_order.make_stock_entry",
 												{
 													work_order_id: frm.doc.name,
-													purpose: purpose,
+													purpose,
 													qty: data.qty,
 													is_additional_transfer_entry: 1,
 												}
