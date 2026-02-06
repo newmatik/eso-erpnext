@@ -274,12 +274,11 @@ class StockController(AccountsController):
 
 			if self.docstatus == 1:
 				if not gl_entries:
-					# gl_entries = (
-					# 	self.get_gl_entries(warehouse_account, via_landed_cost_voucher)
-					# 	if self.doctype == "Purchase Receipt"
-					# 	else self.get_gl_entries(warehouse_account)
-					# )
-					gl_entries = self.get_gl_entries({})
+					gl_entries = (
+						self.get_gl_entries({}, via_landed_cost_voucher)
+						if self.doctype == "Purchase Receipt"
+						else self.get_gl_entries(get_warehouse_account_v2(self.get("warehouses")))
+					)
 				make_gl_entries(gl_entries, from_repost=from_repost)
 
 	def validate_serialized_batch(self):
@@ -695,7 +694,7 @@ class StockController(AccountsController):
 
 		# Map of inventory accounts either by item or by warehouse, depending on
 		# company settings. Used by get_inventory_account_dict below.
-		inventory_account_map = self.get_inventory_account_map()
+		# inventory_account_map = self.get_inventory_account_map()
 
 		sle_map = self.get_stock_ledger_details()
 		voucher_details = self.get_voucher_details(default_expense_account, default_cost_center, sle_map)
@@ -708,32 +707,27 @@ class StockController(AccountsController):
 			sle_rounding_diff = 0.0
 			if sle_list:
 				for sle in sle_list:
-					# Always try to get warehouse account, even if not in passed warehouse_account dict
-					warehouse_account_data = get_warehouse_account_v2([sle.warehouse, item_row.get("target_warehouse"), item_row.get("warehouse")])
 
-					# Check if the warehouse has an account
-					if warehouse_account_data.get(sle.warehouse) and warehouse_account_data[sle.warehouse].get("account"):
-						# Update warehouse_account with fetched data
-						warehouse_account.update(warehouse_account_data)
-						# Inventory account for this SLE (stock account and currency)
-						_inv_dict = warehouse_account_data.get(sle.warehouse)
+					warehouse_account = get_warehouse_account_v2([sle.warehouse, item_row.get("target_warehouse"), item_row.get("warehouse")])
+					# print(warehouse_account)
+					if warehouse_account.get(sle.warehouse):
+						# from warehouse account
+
 						sle_rounding_diff += flt(sle.stock_value_difference)
 
 						self.check_expense_account(item_row)
 
 						# expense account/ target_warehouse / source_warehouse
 						if item_row.get("target_warehouse"):
-							_target_wh_inv_dict = self.get_inventory_account_dict(
-								item_row, inventory_account_map, warehouse_field="target_warehouse"
-							)
-							expense_account = _target_wh_inv_dict["account"]
+							warehouse = item_row.get("target_warehouse")
+							expense_account = warehouse_account[warehouse]["account"]
 						else:
 							expense_account = item_row.expense_account
 
 						gl_list.append(
 							self.get_gl_dict(
 								{
-									"account": _inv_dict["account"],
+									"account": warehouse_account[sle.warehouse]["account"],
 									"against": expense_account,
 									"cost_center": item_row.cost_center,
 									"project": sle.get("project") or item_row.project or self.get("project"),
@@ -743,7 +737,7 @@ class StockController(AccountsController):
 									or self.get("is_opening")
 									or "No",
 								},
-								_inv_dict["account_currency"],
+								warehouse_account[sle.warehouse]["account_currency"],
 								item=item_row,
 							)
 						)
@@ -752,7 +746,7 @@ class StockController(AccountsController):
 							self.get_gl_dict(
 								{
 									"account": expense_account,
-									"against": _inv_dict["account"],
+									"against": warehouse_account[sle.warehouse]["account"],
 									"cost_center": item_row.cost_center,
 									"remarks": self.get("remarks") or _("Accounting Entry for Stock"),
 									"debit": -1 * flt(sle.stock_value_difference, precision),
@@ -772,15 +766,9 @@ class StockController(AccountsController):
 			if abs(sle_rounding_diff) > (1.0 / (10**precision)) and self.is_internal_transfer():
 				warehouse_asset_account = ""
 				if self.get("is_internal_customer"):
-					_inv_dict = self.get_inventory_account_dict(
-						item_row, inventory_account_map, warehouse_field="target_warehouse"
-					)
-
-					warehouse_asset_account = _inv_dict.get("account") if _inv_dict else None
+					warehouse_asset_account = warehouse_account[item_row.get("target_warehouse")]["account"]
 				elif self.get("is_internal_supplier"):
-					_inv_dict = self.get_inventory_account_dict(item_row, inventory_account_map)
-
-					warehouse_asset_account = _inv_dict.get("account") if _inv_dict else None
+					warehouse_asset_account = warehouse_account[item_row.get("warehouse")]["account"]
 
 				expense_account = frappe.get_cached_value("Company", self.company, "default_expense_account")
 				if not expense_account:
@@ -789,6 +777,7 @@ class StockController(AccountsController):
 							"Please set default cost of goods sold account in company {0} for booking rounding gain and loss during stock transfer"
 						).format(frappe.bold(self.company))
 					)
+
 
 				gl_list.append(
 					self.get_gl_dict(
@@ -801,7 +790,7 @@ class StockController(AccountsController):
 							"debit": sle_rounding_diff,
 							"is_opening": item_row.get("is_opening") or self.get("is_opening") or "No",
 						},
-						_inv_dict["account_currency"],
+						warehouse_account[sle.warehouse]["account_currency"],
 						item=item_row,
 					)
 				)

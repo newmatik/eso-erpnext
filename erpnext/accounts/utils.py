@@ -1603,7 +1603,7 @@ def repost_gle_for_stock_vouchers(
 			voucher_obj = frappe.get_lazy_doc(voucher_type, voucher_no)
 			# Some transactions post credit as negative debit, this is handled while posting GLE
 			# but while comparing we need to make sure it's flipped so comparisons are accurate
-			expected_gle = toggle_debit_credit_if_negative(voucher_obj.get_gl_entries(warehouse_account))
+			expected_gle = toggle_debit_credit_if_negative(voucher_obj.get_gl_entries({}))
 			if expected_gle:
 				if not existing_gle or not compare_existing_and_expected_gle(
 					existing_gle, expected_gle, precision
