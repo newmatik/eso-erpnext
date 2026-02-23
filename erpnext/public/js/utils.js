@@ -493,6 +493,20 @@ erpnext.utils.update_child_items = function(opts) {
 		in_list_view: 1,
 		label: __('Rate')
 	}];
+
+	// Inherit rate precision from the child doctype's field definition so
+	// property-setter overrides (e.g. 5 decimal places) are respected.
+	var child_dt_meta = frappe.get_meta(frm.doc.doctype);
+	var child_table_df = child_dt_meta && (child_dt_meta.fields || []).find(function(f) {
+		return f.fieldname === child_docname;
+	});
+	if (child_table_df && child_table_df.options) {
+		var rate_df = frappe.meta.get_docfield(child_table_df.options, "rate");
+		if (rate_df && rate_df.precision) {
+			fields.find(function(f) { return f.fieldname === "rate"; }).precision = cint(rate_df.precision);
+		}
+	}
+
     if (frm.doc.doctype == "Delivery Note") {
         fields.splice(2, 0, {
             fieldtype: 'Float',
