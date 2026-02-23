@@ -678,9 +678,18 @@ erpnext.utils.update_child_items = function (opts) {
 	const cannot_add_row = (typeof opts.cannot_add_row === 'undefined') ? true : opts.cannot_add_row;
 	const child_docname = (typeof opts.cannot_add_row === 'undefined') ? "items" : opts.child_docname;
 	this.data = [];
-	const child_meta = frappe.get_meta(`${frm.doc.doctype} Item`);
-	const has_reserved_stock = opts.has_reserved_stock ? true : false;
-	const get_precision = (fieldname) => child_meta.fields.find((f) => f.fieldname == fieldname).precision;
+
+	// Resolve child doctype from parent meta so precision respects property-setter overrides.
+	var child_dt_meta = frappe.get_meta(frm.doc.doctype);
+	var child_table_df = child_dt_meta && (child_dt_meta.fields || []).find(function (f) {
+		return f.fieldname === child_docname;
+	});
+	var child_doctype = (child_table_df && child_table_df.options) ? child_table_df.options : (frm.doc.doctype + " Item");
+	var child_meta = frappe.get_meta(child_doctype);
+	var get_precision = function (fieldname) {
+		var df = child_meta.fields.find(function (f) { return f.fieldname === fieldname; });
+		return df && df.precision != null ? cint(df.precision) : undefined;
+	};
 
 	this.data = frm.doc[opts.child_docname].map((d) => {
 		return {
@@ -707,21 +716,6 @@ erpnext.utils.update_child_items = function (opts) {
 			read_only: 1,
 			hidden: 1,
 		},
-        {
-            fieldtype:'Float',
-            fieldname:"qty",
-            default: 0,
-            read_only: 0,
-            in_list_view: 1,
-            label: __('Qty')
-        }, {
-            fieldtype:'Currency',
-            fieldname:"rate",
-            default: 0,
-            read_only: 0,
-            in_list_view: 1,
-            label: __('Rate')
-        },
 		{
 			fieldtype: "Link",
 			fieldname: "item_code",
@@ -786,7 +780,7 @@ erpnext.utils.update_child_items = function (opts) {
 							uom: me.doc.uom,
 							pos_profile: cint(frm.doc.is_pos) ? frm.doc.pos_profile : "",
 							tax_category: frm.doc.tax_category,
-							child_doctype: frm.doc.doctype + " Item",
+							child_doctype: child_doctype,
 							is_old_subcontracting_flow: frm.doc.is_old_subcontracting_flow,
 						},
 					},
