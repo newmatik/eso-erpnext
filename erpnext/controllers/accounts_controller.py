@@ -2382,7 +2382,6 @@ def add_taxes_from_tax_template(child_item, parent_doc, db_insert=True):
 def set_order_defaults(
 	parent_doctype, parent_doctype_name, child_doctype, child_docname, trans_item
 ):
-	from newmatik.api.quotation import get_customer_item_list, get_customer_item
 	"""
 	Returns a Sales/Purchase Order Item child item containing the default values
 	"""
@@ -2405,14 +2404,6 @@ def set_order_defaults(
 		get_conversion_factor(item.item_code, child_item.uom).get("conversion_factor")
 	)
 	child_item.conversion_factor = flt(trans_item.get("conversion_factor")) or conversion_factor
-
-	if parent_doctype == 'Sales Order':
-		child_item.reqd_by_date = trans_item.get('reqd_by_date') or p_doc.reqd_by_date
-		
-		# get customer reference code
-		customer_items_list = get_customer_item_list(item.name, p_doc.customer_name)
-		if customer_items_list:
-			child_item.customer_item_code = get_customer_item(customer_items_list[0])
 
 	if child_doctype == "Purchase Order Item":
 		# Initialized value will update in parent validation
@@ -2571,16 +2562,13 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 		)
 
 	def validate_quantity(child_item, new_data):
-		""" Commented the validation added in V13 since in our v12 we dont have this validation
-			Also added the blanket order logic from our v12
-		"""
-		# if not flt(new_data.get("qty")):
-		# 	frappe.throw(
-		# 		_("Row # {0}: Quantity for Item {1} cannot be zero").format(
-		# 			new_data.get("idx"), frappe.bold(new_data.get("item_code"))
-		# 		),
-		# 		title=_("Invalid Qty"),
-		# 	)
+		if not flt(new_data.get("qty")):
+			frappe.throw(
+				_("Row # {0}: Quantity for Item {1} cannot be zero").format(
+					new_data.get("idx"), frappe.bold(new_data.get("item_code"))
+				),
+				title=_("Invalid Qty"),
+			)
 
 		if parent_doctype == "Sales Order" and flt(new_data.get("qty")) < flt(child_item.delivered_qty):
 			frappe.throw(_("Cannot set quantity less than delivered quantity"))
@@ -2589,9 +2577,6 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 			child_item.received_qty
 		):
 			frappe.throw(_("Cannot set quantity less than received quantity"))
-
-		if parent_doctype == "Blanket Order" and flt(d.get("qty")) < flt(child_item.ordered_qty):
-			frappe.throw(_("Cannot set quantity less than ordered quantity"))
 
 	def should_update_supplied_items(doc) -> bool:
 		"""Subcontracted PO can allow following changes *after submit*:
@@ -2691,28 +2676,11 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 			conv_fac_precision = child_item.precision("conversion_factor") or 2
 		qty_precision = child_item.precision("qty") or 2
 
-		# ESO CHANGE, set Item if different
-		user = frappe.session.user
-		if child_item.item_code != d.get("item_code"):
-			if ("Sales Manager" in frappe.get_roles(user)):
-				if (( 'billed_amt' in child_item.__dict__ and child_item.billed_amt > 0 ) or ('delivered_qty' in child_item.__dict__ and child_item.delivered_qty > 0)):
-					frappe.throw(_("Cannot update item since partial bill or partial delivery exists."))
-				else:
-					item_data = frappe.get_doc("Item", d.get("item_code"))
-					child_item.item_code = d.get("item_code")
-					child_item.item_name = item_data.item_name
-					child_item.description = item_data.description
-					child_item.stock_uom = item_data.stock_uom
-					child_item.uom = item_data.stock_uom
-			else:
-				frappe.throw(_("User must be Sales Manager to update Item Code."))
-
-		# ESO Change to accept overbilling
-		# if flt(child_item.billed_amt) > (flt(d.get("rate")) * flt(d.get("qty"))):
-		# 	frappe.throw(_("Row #{0}: Cannot set Rate if amount is greater than billed amount for Item {1}.")
-		# 				 .format(child_item.idx, child_item.item_code))
-		# else:
-		child_item.rate = flt(d.get("rate"))
+		if flt(child_item.billed_amt) > (flt(d.get("rate")) * flt(d.get("qty"))):
+			frappe.throw(_("Row #{0}: Cannot set Rate if amount is greater than billed amount for Item {1}.")
+						 .format(child_item.idx, child_item.item_code))
+		else:
+			child_item.rate = flt(d.get("rate"))
 
 		if d.get('idx'):
 			child_item.idx = d.get('idx')
