@@ -766,7 +766,7 @@ erpnext.work_order = {
 			}
 		}
 
-			erpnext.work_order.setup_stock_reservation(frm);
+		erpnext.work_order.setup_stock_reservation(frm);
 
 			if (!frm.doc.track_semi_finished_goods) {
 				const show_start_btn =
@@ -836,7 +836,6 @@ erpnext.work_order = {
 								},
 								__("Make")
 							);
-						}
 					}
 				}
 			}
@@ -913,7 +912,7 @@ erpnext.work_order = {
 		}
 	},
 
-	setup_stock_reservation(frm) {
+	setup_stock_reservation: function (frm) {
 		if (frm.doc.docstatus === 1 && frm.doc.reserve_stock) {
 			if (
 				frm.events.has_unreserved_stock(frm) &&
