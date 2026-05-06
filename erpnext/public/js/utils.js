@@ -695,6 +695,10 @@ erpnext.utils.select_alternate_items = function (opts) {
 
 erpnext.utils.update_child_items = function (opts) {
 	const frm = opts.frm;
+	const has_reserved_stock =
+		opts.has_reserved_stock != null
+			? opts.has_reserved_stock
+			: !!(frm.doc.__onload && frm.doc.__onload.has_reserved_stock);
 	const cannot_add_row = (typeof opts.cannot_add_row === 'undefined') ? true : opts.cannot_add_row;
 	const child_docname = (typeof opts.cannot_add_row === 'undefined') ? "items" : opts.child_docname;
 	this.data = [];
@@ -712,7 +716,7 @@ erpnext.utils.update_child_items = function (opts) {
 	};
 
 	this.data = frm.doc[opts.child_docname].map((d) => {
-		return {
+		const row = {
 			docname: d.name,
 			name: d.name,
 			item_code: d.item_code,
@@ -727,6 +731,14 @@ erpnext.utils.update_child_items = function (opts) {
 			fg_item_qty: d.fg_item_qty,
 			description: d.description,
 		};
+		if (frm.doc.doctype === "Sales Order" || frm.doc.doctype === "Purchase Order") {
+			row.reqd_by_date = d.reqd_by_date;
+			row.expected_delivery_date = d.expected_delivery_date;
+		}
+		if (frm.doc.doctype === "Delivery Note") {
+			row.weight_kg = d.weight_kg;
+		}
+		return row;
 	});
 
 	const fields = [
@@ -741,6 +753,7 @@ erpnext.utils.update_child_items = function (opts) {
 			fieldname: "item_code",
 			options: "Item",
 			in_list_view: 1,
+			columns: 2,
 			read_only: 0,
 			disabled: 0,
 			label: __("Item Code"),
@@ -840,7 +853,7 @@ erpnext.utils.update_child_items = function (opts) {
 			fieldname: "item_name",
 			label: __("Item Name"),
 			read_only: 1,
-			in_list_view: 1,
+			in_list_view: 0,
 		},
 		{
 			fieldtype: "Link",
@@ -876,6 +889,7 @@ erpnext.utils.update_child_items = function (opts) {
 			default: 0,
 			read_only: 0,
 			in_list_view: 1,
+			columns: 1,
 			label: __("Qty"),
 			precision: get_precision("qty"),
 		},
@@ -886,6 +900,7 @@ erpnext.utils.update_child_items = function (opts) {
 			default: 0,
 			read_only: 0,
 			in_list_view: 1,
+			columns: 2,
 			label: __("Rate"),
 			precision: get_precision("rate"),
 		},
@@ -901,6 +916,7 @@ erpnext.utils.update_child_items = function (opts) {
             fieldtype: 'Float',
             fieldname: "weight_kg",
             in_list_view: 1,
+			columns: 1,
             label: __("Weight kg"),
             reqd: 1
         })
@@ -911,6 +927,7 @@ erpnext.utils.update_child_items = function (opts) {
 			fieldtype: "Date",
 			fieldname: frm.doc.doctype == "Sales Order" ? "delivery_date" : "schedule_date",
 			in_list_view: 1,
+			columns: 1,
 			label: frm.doc.doctype == "Sales Order" ? __("Delivery Date") : __("Reqd by date"),
 			default: frm.doc.doctype == "Sales Order" ? frm.doc.delivery_date : frm.doc.schedule_date,
 			reqd: 1,
@@ -928,6 +945,7 @@ erpnext.utils.update_child_items = function (opts) {
 			fieldtype: 'Date',
 			fieldname: "reqd_by_date",
 			in_list_view: 1,
+			columns: 1,
 			label: __("Reqd By Date")
 		})
 	} else if (frm.doc.doctype == "Purchase Order"){
@@ -935,6 +953,7 @@ erpnext.utils.update_child_items = function (opts) {
             fieldtype: 'Date',
 			fieldname: "expected_delivery_date",
 			in_list_view: 1,
+			columns: 1,
 			label: __("Expected Delivery Date")
         })
     }
@@ -979,6 +998,13 @@ erpnext.utils.update_child_items = function (opts) {
 	let dialog = new frappe.ui.Dialog({
 		title: __("Update Items"),
 		size: "extra-large",
+		on_page_show: function () {
+			$(dialog.wrapper).css("max-width", "min(96vw, 1400px)");
+			dialog.$wrapper.find(".form-grid-container").css({
+				"overflow-x": "auto",
+				"-webkit-overflow-scrolling": "touch",
+			});
+		},
 		fields: [
 			{
 				fieldname: "trans_items",
@@ -996,7 +1022,6 @@ erpnext.utils.update_child_items = function (opts) {
 		],
 		primary_action: function () {
 			if (frm.doctype == "Sales Order" && has_reserved_stock && frm.doc.is_subcontracted == 0) {
-				this.hide();
 				frappe.confirm(
 					__(
 						"The reserved stock will be released when you update items. Are you certain you wish to proceed?"
@@ -1009,7 +1034,6 @@ erpnext.utils.update_child_items = function (opts) {
 		},
 		update_items: function () {
 			const trans_items = this.get_values()["trans_items"];
-			console.log(trans_items)
 			frappe.call({
 				method: "erpnext.controllers.accounts_controller.update_child_qty_rate",
 				freeze: true,
@@ -1029,41 +1053,7 @@ erpnext.utils.update_child_items = function (opts) {
 		primary_action_label: __('Update')
 	});
 
-	frm.doc[opts.child_docname].forEach(d => {
-		if (frm.doc.doctype == 'Sales Order' || frm.doc.doctype == 'Purchase Order' ) {
-			dialog.fields_dict.trans_items.df.data.push({
-				"docname": d.name,
-				"name": d.name,
-				"item_code": d.item_code,
-				"reqd_by_date": d.reqd_by_date,
-				"delivery_date": d.delivery_date,
-                "expected_delivery_date": d.expected_delivery_date,
-				"schedule_date": d.schedule_date,
-				"conversion_factor": d.conversion_factor,
-				"qty": d.qty,
-				"rate": d.rate,
-			});
-        } else if (frm.doc.doctype == 'Delivery Note') {
-            dialog.fields_dict.trans_items.df.data.push({
-				"docname": d.name,
-				"name": d.name,
-				"item_code": d.item_code,
-                "weight_kg": d.weight_kg,
-				"qty": d.qty,
-				"rate": d.rate,
-			});
-		} else {
-			dialog.fields_dict.trans_items.df.data.push({
-				"docname": d.name,
-				"name": d.name,
-				"item_code": d.item_code,
-				"qty": d.qty,
-				"rate": d.rate,
-			});
-		}
-		this.data = dialog.fields_dict.trans_items.df.data;
-		dialog.fields_dict.trans_items.grid.refresh();
-	})
+	dialog.fields_dict.trans_items.grid.refresh();
 	dialog.show();
 }
 

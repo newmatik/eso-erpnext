@@ -7,14 +7,17 @@ import frappe
 
 def execute():
 	if frappe.db.exists("DocType", "Issue") and frappe.db.count("Issue"):
-		invalid_issues = frappe.get_all(
-			"Issue",
-			{"first_responded_on": ["is", "set"], "response_by_variance": ["<", 0]},
-			[
-				"name",
-				"response_by_variance",
-				"timestampdiff(Second, `first_responded_on`, `response_by`) as variance",
-			],
+		invalid_issues = frappe.db.sql(
+			"""
+			SELECT
+				`name`,
+				`response_by_variance`,
+				TIMESTAMPDIFF(SECOND, `first_responded_on`, `response_by`) AS variance
+			FROM `tabIssue`
+			WHERE `first_responded_on` IS NOT NULL
+				AND `response_by_variance` < 0
+			""",
+			as_dict=True,
 		)
 
 		# issues which has response_by_variance set as -ve
@@ -30,14 +33,17 @@ def execute():
 				update_modified=False,
 			)
 
-		invalid_issues = frappe.get_all(
-			"Issue",
-			{"resolution_date": ["is", "set"], "resolution_by_variance": ["<", 0]},
-			[
-				"name",
-				"resolution_by_variance",
-				"timestampdiff(Second, `resolution_date`, `resolution_by`) as variance",
-			],
+		invalid_issues = frappe.db.sql(
+			"""
+			SELECT
+				`name`,
+				`resolution_by_variance`,
+				TIMESTAMPDIFF(SECOND, `resolution_date`, `resolution_by`) AS variance
+			FROM `tabIssue`
+			WHERE `resolution_date` IS NOT NULL
+				AND `resolution_by_variance` < 0
+			""",
+			as_dict=True,
 		)
 
 		# issues which has resolution_by_variance set as -ve
